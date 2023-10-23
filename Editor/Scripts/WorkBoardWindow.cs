@@ -27,8 +27,19 @@ namespace WorkBoard {
             return false;
         }
 
+        [Serializable]
+        private struct EdgeData {
+            [SerializeField, SerializeReference]
+            public BoardNodeData from;
+            [SerializeField, SerializeReference]
+            public BoardNodeData to;
+        }
+
         [SerializeField]
         private List<NodeData> nodeData;
+
+        [SerializeField]
+        private List<EdgeData> edgeData;
 
         [SerializeField]
         private WorkBoardData target;
@@ -61,7 +72,11 @@ namespace WorkBoard {
             _graphView.graphViewChanged -= OnGraphChanged;
             _graphView.DeleteElements(_graphView.graphElements);
             _dataMap.Clear();
+
+            // load
             nodeData = CloneData(data.nodeData);
+            // TODO: load edges
+            // TODO: load groups
 
             RebuildGraph();
 
@@ -71,11 +86,21 @@ namespace WorkBoard {
         private void RebuildGraph() {
             try {
                 if (nodeData != null) {
+                    var nodeMap = new Dictionary<BoardNodeData, BoardNode>();
+
                     foreach (var n in nodeData) {
                         var node = BoardNode.Create(n.data);
                         node.SetPosition(n.position);
                         _graphView.AddElement(node);
                         _dataMap[node] = n;
+                        nodeMap[n.data] = node;
+                    }
+
+                    if (edgeData != null) {
+                        foreach (var e in edgeData) {
+                            Debug.Log("edgeeee");
+                            nodeMap[e.from].ConnectChild(nodeMap[e.to]);
+                        }
                     }
                 }
             }
@@ -120,6 +145,23 @@ namespace WorkBoard {
                             nodeData.Remove(data);
                         }
                     }
+
+                    if (deleted is Edge edge) {
+                        var fromData = (edge.input.node as BoardNode).data;
+                        var toData = (edge.output.node as BoardNode).data;
+                        edgeData.RemoveAll(d => d.from == fromData && d.to == toData);
+                    }
+                }
+            }
+
+            if (change.edgesToCreate != null) {
+                edgeData ??= new List<EdgeData>();
+                foreach (var edge in change.edgesToCreate) {
+                    edgeData.Add(new EdgeData()
+                    {
+                        from = (edge.input.node as BoardNode).data,
+                        to = (edge.output.node as BoardNode).data,
+                    });
                 }
             }
 
@@ -140,6 +182,8 @@ namespace WorkBoard {
 
         private void SaveToTarget() {
             target.nodeData = CloneData(nodeData);
+            // TODO: save edges
+            // TODO: save groups
             EditorUtility.SetDirty(target);
         }
 

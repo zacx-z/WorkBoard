@@ -1,4 +1,5 @@
 namespace WorkBoard {
+    using System.Linq;
     using UnityEngine;
     using UnityEngine.UIElements;
     using UnityEditor;
@@ -11,6 +12,7 @@ namespace WorkBoard {
             this.AddManipulator(new ContentDragger());
             this.AddManipulator(new RectangleSelector());
             this.AddManipulator(new ContentZoomer());
+            this.Insert(0, new GridBackground());
 
             this.RegisterCallback<DragEnterEvent>(OnDragEnter);
             this.RegisterCallback<DragUpdatedEvent>(OnDragUpdated);
@@ -28,7 +30,7 @@ namespace WorkBoard {
             var pos = e.localMousePosition;
             foreach (var p in DragAndDrop.paths) {
                 AddAssetNode(AssetDatabase.LoadAssetAtPath<Object>(p), pos);
-                pos += 50 * Vector2.down;
+                pos += 50 * Vector2.up;
             }
             DragAndDrop.AcceptDrag();
         }
@@ -39,17 +41,31 @@ namespace WorkBoard {
         }
 
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt) {
+            evt.menu.AppendAction("Select Assets", SelectAssets);
+            evt.menu.AppendAction("Create Group", CreateGroup);
+            evt.menu.AppendSeparator();
             base.BuildContextualMenu(evt);
             evt.menu.AppendAction("Create Note", CreateNoteNode);
-            evt.menu.AppendAction("Select Assets", SelectAssets);
         }
 
         private void SelectAssets(DropdownMenuAction action) {
-            foreach (var n in selection) {
+            Selection.objects = selection.Select(n => {
                 if (n is FileNode f) {
-                    Debug.Log(n);
+                    return f.data.asset;
+                }
+
+                return null;
+            }).Where(a => a != null).ToArray();
+        }
+
+        private void CreateGroup(DropdownMenuAction action) {
+            var group = new Group() { title = "New Group" };
+            foreach (var sel in selection) {
+                if (sel is Node n) {
+                    group.AddElement(n);
                 }
             }
+            AddElement(group);
         }
 
         private void CreateNoteNode(DropdownMenuAction action) {
@@ -57,7 +73,7 @@ namespace WorkBoard {
             OnCreateNode(node, action.eventInfo.mousePosition);
         }
 
-        private void OnCreateNode<T>(T node, Vector2 position) where T : BoardNode {
+        public void OnCreateNode<T>(T node, Vector2 position) where T : BoardNode {
             var rect = node.GetPosition();
             rect.position = position;
             node.SetPosition(rect);

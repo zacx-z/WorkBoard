@@ -24,6 +24,9 @@ namespace WorkBoard {
 
         [SerializeField]
         public List<NodeData> nodeData;
+
+        [SerializeField]
+        public List<(int, int)> edgeData;
     }
 
     [Serializable]
