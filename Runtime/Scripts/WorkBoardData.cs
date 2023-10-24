@@ -22,11 +22,17 @@ namespace WorkBoard {
             }
         }
 
+        [Serializable]
+        public class EdgeData {
+            public int fromIndex;
+            public int toIndex;
+        }
+
         [SerializeField]
         public List<NodeData> nodeData;
 
         [SerializeField]
-        public List<(int, int)> edgeData;
+        public List<EdgeData> edgeData;
     }
 
     [Serializable]

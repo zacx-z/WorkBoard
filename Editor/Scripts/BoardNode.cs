@@ -46,16 +46,15 @@ namespace WorkBoard {
                 bv.OnCreateNode(node, position);
             }
 
-            if (childrenPort == null) {
-                childrenPort = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, null);
-                childrenPort.SetEnabled(false);
-                outputContainer.Add(childrenPort);
-            }
+            var edge = ConnectChild(node);
 
-            ConnectChild(node);
+            if (view is WorkBoardView v) {
+                v.OnEdgeAdded(edge);
+            }
         }
 
-        public void ConnectChild(BoardNode node) {
+        public Edge ConnectChild(BoardNode node) {
+            CreateChildrenPort();
             if (node.parentPort == null) {
                 node.parentPort = Port.Create<Edge>(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, null);
                 node.parentPort.SetEnabled(false);
@@ -65,11 +64,19 @@ namespace WorkBoard {
             var edge = childrenPort.ConnectTo(node.parentPort);
             edge.SetEnabled(false);
             parentView.AddElement(edge);
-            
-            // TODO: send an event
 
             RefreshExpandedState();
             node.RefreshExpandedState();
+
+            return edge;
+        }
+
+        private void CreateChildrenPort() {
+            if (childrenPort == null) {
+                childrenPort = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, null);
+                childrenPort.SetEnabled(false);
+                outputContainer.Add(childrenPort);
+            }
         }
     }
 

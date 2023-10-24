@@ -7,6 +7,7 @@ namespace WorkBoard {
 
     public class WorkBoardView : GraphView {
         public event System.Action<GraphElement, Rect> onNodeAdded;
+        public event System.Action<Edge> onEdgeAdded;
         public WorkBoardView() {
             this.AddManipulator(new SelectionDragger());
             this.AddManipulator(new ContentDragger());
@@ -81,6 +82,10 @@ namespace WorkBoard {
             AddElement(node);
 
             onNodeAdded?.Invoke(node, rect);
+        }
+
+        internal void OnEdgeAdded(Edge edge) {
+            onEdgeAdded?.Invoke(edge);
         }
     }
 }
