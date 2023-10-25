@@ -31,6 +31,8 @@ namespace WorkBoard {
                 if (AssetDatabase.IsValidFolder(path)) {
                     evt.menu.AppendAction("Expand Folder Content", ExpandFolderContent);
                 }
+            } else {
+                evt.menu.AppendAction("Expand Children References", ExpandChildrenReferences);
             }
             evt.menu.AppendSeparator();
             base.BuildContextualMenu(evt);
@@ -42,7 +44,7 @@ namespace WorkBoard {
 
         private void ExpandFolderContent(DropdownMenuAction obj) {
             var path = AssetDatabase.GetAssetPath(asset);
-            Vector2 pos = GetPosition().position + 200 * Vector2.right;
+            Vector2 pos = GetNewChildPosition();
             foreach (var subFolder in AssetDatabase.GetSubFolders(path)) {
                 CreateChild(subFolder, pos);
                 pos += 100 * Vector2.up;
@@ -55,9 +57,28 @@ namespace WorkBoard {
             }
         }
 
+        private void ExpandChildrenReferences(DropdownMenuAction action) {
+            var so = new SerializedObject(asset);
+            Vector2 pos = GetNewChildPosition();
+            for (var iter = so.GetIterator(); iter.Next(true);) {
+                if ((iter.propertyType == SerializedPropertyType.ObjectReference || iter.propertyType == SerializedPropertyType.ManagedReference) && iter.objectReferenceValue != null) {
+                    var path = AssetDatabase.GetAssetPath(iter.objectReferenceValue);
+                    if (!string.IsNullOrEmpty(path)) {
+                        CreateChild(path, pos);
+                        pos += 100 * Vector2.up;
+                    }
+                }
+            }
+            so.Dispose();
+        }
+
         private void CreateChild(string path, Vector2 pos) {
             base.CreateChild(new FileData() { asset = AssetDatabase.LoadAssetAtPath<Object>(path) }, pos);
-            Debug.Log(path);
+        }
+
+        private Vector2 GetNewChildPosition() {
+            var pos = GetPosition();
+            return pos.position + (pos.width + 50) * Vector2.right;
         }
     }
 }
