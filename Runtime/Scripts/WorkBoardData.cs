@@ -28,11 +28,20 @@ namespace WorkBoard {
             public int toIndex;
         }
 
+        [Serializable]
+        public class GroupData {
+            public string title;
+            public int[] containedNodes;
+        }
+
         [SerializeField]
         public List<NodeData> nodeData;
 
         [SerializeField]
         public List<EdgeData> edgeData;
+
+        [SerializeField]
+        public List<GroupData> groupData;
     }
 
     [Serializable]

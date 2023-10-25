@@ -6,6 +6,7 @@ namespace WorkBoard {
     using UnityEditor.Callbacks;
     using UnityEditor.Experimental.GraphView;
     using UnityEditor.UIElements;
+    using System.Linq;
     using NodeData = WorkBoardData.NodeData;
 
     public class WorkBoardWindow : EditorWindow {
@@ -35,16 +36,26 @@ namespace WorkBoard {
             public BoardNodeData to;
         }
 
-        [SerializeField]
-        private List<NodeData> nodeData;
+        [Serializable]
+        private class GroupData {
+            [SerializeField]
+            public string title;
+            [SerializeField, SerializeReference]
+            public List<BoardNodeData> containedNodes;
+        }
 
         [SerializeField]
+        private List<NodeData> nodeData;
+        [SerializeField]
         private List<EdgeData> edgeData;
+        [SerializeField]
+        private List<GroupData> groupData;
 
         [SerializeField]
         private WorkBoardData target;
 
         private Dictionary<Node, NodeData> _dataMap;
+        private Dictionary<Group, GroupData> _groupMap;
         private WorkBoardView _graphView;
 
         private void OnEnable() {
@@ -65,6 +76,10 @@ namespace WorkBoard {
             _graphView.graphViewChanged += OnGraphChanged;
             _graphView.onNodeAdded += OnNodeAdded;
             _graphView.onEdgeAdded += OnEdgeAdded;
+            _graphView.onGroupAdded += OnGroupAdded;
+            _graphView.groupTitleChanged = OnGroupTitleChanged;
+            _graphView.elementsAddedToGroup += OnElementsAddedToGroup;
+            _graphView.elementsRemovedFromGroup += OnElementsRemovedFromGroup;
         }
 
         private void SetTarget(WorkBoardData data) {
@@ -84,7 +99,16 @@ namespace WorkBoard {
                     to = nodeData[edge.toIndex].data
                 });
             }
-            // TODO: load groups
+
+            groupData = new List<GroupData>();
+
+            foreach (var group in data.groupData) {
+                groupData.Add(new GroupData()
+                {
+                    title = group.title,
+                    containedNodes = group.containedNodes.Select(i => nodeData[i].data).ToList()
+                });
+            }
 
             RebuildGraph();
 
@@ -107,6 +131,21 @@ namespace WorkBoard {
                     if (edgeData != null) {
                         foreach (var e in edgeData) {
                             nodeMap[e.from].ConnectChild(nodeMap[e.to]);
+                        }
+                    }
+
+                    if (groupData != null) {
+                        _groupMap = new Dictionary<Group, GroupData>();
+                        foreach (var g in groupData) {
+                            var group = new Group
+                            {
+                                title = g.title
+                            };
+                            foreach (var n in g.containedNodes) {
+                                group.AddElement(nodeMap[n]);
+                            }
+                            _graphView.AddElement(group);
+                            _groupMap[group] = g;
                         }
                     }
                 }
@@ -158,6 +197,12 @@ namespace WorkBoard {
                         var toData = (edge.input.node as BoardNode).data;
                         edgeData.RemoveAll(d => d.from == fromData && d.to == toData);
                     }
+
+                    if (deleted is Group group) {
+                        var data = _groupMap[group];
+                        groupData.Remove(data);
+                        _groupMap.Remove(group);
+                    }
                 }
             }
 
@@ -180,10 +225,35 @@ namespace WorkBoard {
             });
         }
 
+        private void OnGroupAdded(Group group) {
+            groupData ??= new List<GroupData>();
+            var data = new GroupData()
+            {
+                title = group.title,
+                containedNodes = CollectContainedNodes(group)
+            };
+            groupData.Add(data);
+
+            _groupMap ??= new Dictionary<Group, GroupData>();
+            _groupMap[group] = data;
+        }
+
+        private void OnGroupTitleChanged(Group group, string str) {
+            _groupMap[group].title = str;
+        }
+
+        private void OnElementsAddedToGroup(Group group, IEnumerable<GraphElement> elems) {
+            _groupMap[group].containedNodes = CollectContainedNodes(group);
+        }
+
+        private void OnElementsRemovedFromGroup(Group group, IEnumerable<GraphElement> elems) {
+            _groupMap[group].containedNodes = CollectContainedNodes(group);
+        }
+
         public override void SaveChanges() {
             if (target == null || string.IsNullOrEmpty(AssetDatabase.GetAssetPath(target))) {
                 var path = EditorUtility.SaveFilePanelInProject("Save Work Board", "WorkBoard", "asset", "Save");
-                target = ScriptableObject.CreateInstance<WorkBoardData>();
+                target = CreateInstance<WorkBoardData>();
                 SaveToTarget();
                 AssetDatabase.CreateAsset(target, path);
             } else {
@@ -194,6 +264,7 @@ namespace WorkBoard {
 
         private void SaveToTarget() {
             target.nodeData = CloneData(nodeData);
+
             target.edgeData = new List<WorkBoardData.EdgeData>();
             foreach (var edge in edgeData) {
                 target.edgeData.Add(new WorkBoardData.EdgeData()
@@ -202,7 +273,17 @@ namespace WorkBoard {
                     toIndex = nodeData.FindIndex(n => n.data == edge.to),
                 });
             }
-            // TODO: save groups
+
+            target.groupData = new List<WorkBoardData.GroupData>();
+            foreach (var group in groupData) {
+                var data = new WorkBoardData.GroupData()
+                {
+                    title = group.title,
+                    containedNodes = group.containedNodes.Select(node => nodeData.FindIndex(n => n.data == node)).ToArray()
+                };
+                target.groupData.Add(data);
+            }
+
             EditorUtility.SetDirty(target);
         }
 
@@ -213,6 +294,10 @@ namespace WorkBoard {
             }
 
             return cloned;
+        }
+
+        private static List<BoardNodeData> CollectContainedNodes(Group group) {
+            return group.containedElements.Cast<BoardNode>().Where(n => n != null).Select(n => n.data).ToList();
         }
     }
 }

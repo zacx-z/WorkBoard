@@ -8,6 +8,7 @@ namespace WorkBoard {
     public class WorkBoardView : GraphView {
         public event System.Action<GraphElement, Rect> onNodeAdded;
         public event System.Action<Edge> onEdgeAdded;
+        public event System.Action<Group> onGroupAdded;
         public WorkBoardView() {
             this.AddManipulator(new SelectionDragger());
             this.AddManipulator(new ContentDragger());
@@ -67,6 +68,7 @@ namespace WorkBoard {
                 }
             }
             AddElement(group);
+            onGroupAdded?.Invoke(group);
         }
 
         private void CreateNoteNode(DropdownMenuAction action) {
