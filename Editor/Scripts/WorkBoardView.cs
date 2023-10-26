@@ -30,6 +30,7 @@ namespace WorkBoard {
 
         private void OnDragPerformed(DragPerformEvent e) {
             var pos = e.localMousePosition;
+            pos = contentViewContainer.WorldToLocal(pos);
             foreach (var o in DragAndDrop.objectReferences) {
                 if (string.IsNullOrEmpty(AssetDatabase.GetAssetPath(o))) continue;
                 AddAssetNode(o, pos);

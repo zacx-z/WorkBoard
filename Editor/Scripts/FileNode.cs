@@ -3,9 +3,11 @@ namespace WorkBoard {
     using UnityEngine;
     using UnityEngine.UIElements;
     using UnityEditor;
+    using UnityEditor.UIElements;
 
     public class FileNode : BoardNode<FileData> {
         private Object asset => data.asset;
+        private InspectorElement inspectorElement;
 
         public FileNode(FileData data) : base (data){
             this.title = asset.name;
@@ -14,7 +16,9 @@ namespace WorkBoard {
                 image = AssetDatabase.GetCachedIcon(AssetDatabase.GetAssetPath(asset))
             });
             this.expanded = false;
-            
+
+            RefreshInspectorElement();
+
             this.mainContainer.RegisterCallback<MouseDownEvent>(OnClick);
         }
 
@@ -34,6 +38,7 @@ namespace WorkBoard {
             } else {
                 evt.menu.AppendAction("Expand Children References", ExpandChildrenReferences);
             }
+            evt.menu.AppendAction("Show Inspector", ShowInspector, (data.showInspector ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
             evt.menu.AppendSeparator();
             base.BuildContextualMenu(evt);
         }
@@ -70,6 +75,29 @@ namespace WorkBoard {
                 }
             }
             so.Dispose();
+        }
+
+        private void ShowInspector(DropdownMenuAction action) {
+            data.showInspector = !data.showInspector;
+            RefreshInspectorElement();
+        }
+
+        private void RefreshInspectorElement() {
+            if (data.showInspector) {
+                if (inspectorElement == null) {
+                    inspectorElement = new InspectorElement(asset)
+                    {
+                        style = { minWidth = 320 }
+                    };
+                    extensionContainer.Add(inspectorElement);
+                    expanded = true;
+                }
+            } else {
+                if (inspectorElement != null) {
+                    extensionContainer.Remove(inspectorElement);
+                    inspectorElement = null;
+                }
+            }
         }
 
         private void CreateChild(string path, Vector2 pos) {

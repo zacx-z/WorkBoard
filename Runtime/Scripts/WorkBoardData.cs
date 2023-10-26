@@ -56,6 +56,7 @@ namespace WorkBoard {
     public class FileData : BoardNodeData {
         [SerializeField]
         public UnityEngine.Object asset;
+        public bool showInspector;
     }
 
     [Serializable]
