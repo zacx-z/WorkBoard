@@ -64,7 +64,7 @@ namespace WorkBoard {
                 if ((iter.propertyType == SerializedPropertyType.ObjectReference || iter.propertyType == SerializedPropertyType.ManagedReference) && iter.objectReferenceValue != null) {
                     var path = AssetDatabase.GetAssetPath(iter.objectReferenceValue);
                     if (!string.IsNullOrEmpty(path)) {
-                        CreateChild(path, pos);
+                        CreateChild(iter.objectReferenceValue, pos);
                         pos += 100 * Vector2.up;
                     }
                 }
@@ -73,7 +73,11 @@ namespace WorkBoard {
         }
 
         private void CreateChild(string path, Vector2 pos) {
-            base.CreateChild(new FileData() { asset = AssetDatabase.LoadAssetAtPath<Object>(path) }, pos);
+            CreateChild(AssetDatabase.LoadAssetAtPath<Object>(path), pos);
+        }
+
+        private void CreateChild(Object o, Vector2 pos) {
+            base.CreateChild(new FileData() { asset = o }, pos);
         }
 
         private Vector2 GetNewChildPosition() {

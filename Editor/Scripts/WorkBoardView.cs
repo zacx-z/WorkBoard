@@ -30,8 +30,9 @@ namespace WorkBoard {
 
         private void OnDragPerformed(DragPerformEvent e) {
             var pos = e.localMousePosition;
-            foreach (var p in DragAndDrop.paths) {
-                AddAssetNode(AssetDatabase.LoadAssetAtPath<Object>(p), pos);
+            foreach (var o in DragAndDrop.objectReferences) {
+                if (string.IsNullOrEmpty(AssetDatabase.GetAssetPath(o))) continue;
+                AddAssetNode(o, pos);
                 pos += 50 * Vector2.up;
             }
             DragAndDrop.AcceptDrag();
