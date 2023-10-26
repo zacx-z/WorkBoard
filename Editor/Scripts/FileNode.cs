@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.Experimental.GraphView;
 
 namespace WorkBoard {
@@ -69,18 +70,16 @@ namespace WorkBoard {
         private void ExpandChildrenReferences(DropdownMenuAction action) {
             Vector2 pos = GetNewChildPosition();
             parentView.ClearSelection();
-            foreach (var ch in CollectChildren(asset)) {
-                parentView.AddToSelection(CreateChild(ch, pos));
-                pos += 100 * Vector2.up;
-            }
+
+            var children = CollectChildren(asset);
 
             if (asset is GameObject go) {
-                foreach (var comp in go.GetComponents<Component>()) {
-                    foreach (var ch in CollectChildren(comp)) {
-                        parentView.AddToSelection(CreateChild(ch, pos));
-                        pos += 100 * Vector2.up;
-                    }
-                }
+                children = go.GetComponents<Component>().SelectMany(CollectChildren);
+            }
+
+            foreach (var ch in children.Distinct()) {
+                parentView.AddToSelection(CreateChild(ch, pos));
+                pos += 100 * Vector2.up;
             }
         }
 
@@ -90,7 +89,7 @@ namespace WorkBoard {
                 if ((iter.propertyType == SerializedPropertyType.ObjectReference || iter.propertyType == SerializedPropertyType.ManagedReference) && iter.objectReferenceValue != null) {
                     if (iter.objectReferenceValue.GetType() == typeof(Object)) continue;
                     if (iter.objectReferenceValue is Component comp && comp.gameObject == asset) continue;
-                    if (iter.objectReferenceValue == o) continue;
+                    if (iter.objectReferenceValue == asset) continue;
                     var path = AssetDatabase.GetAssetPath(iter.objectReferenceValue);
                     if (!string.IsNullOrEmpty(path)) {
                         yield return iter.objectReferenceValue;
