@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
+
 namespace WorkBoard {
     using System.IO;
     using UnityEngine;
@@ -50,27 +53,47 @@ namespace WorkBoard {
         private void ExpandFolderContent(DropdownMenuAction obj) {
             var path = AssetDatabase.GetAssetPath(asset);
             Vector2 pos = GetNewChildPosition();
+            parentView.ClearSelection();
             foreach (var subFolder in AssetDatabase.GetSubFolders(path)) {
-                CreateChild(subFolder, pos);
+                parentView.AddToSelection(CreateChild(subFolder, pos));
                 pos += 100 * Vector2.up;
             }
 
             foreach (var p in Directory.GetFiles(path, "*", SearchOption.TopDirectoryOnly)) {
                 if (p.EndsWith(".meta")) continue;
-                CreateChild(p, pos);
+                parentView.AddToSelection(CreateChild(p, pos));
                 pos += 100 * Vector2.up;
             }
         }
 
         private void ExpandChildrenReferences(DropdownMenuAction action) {
-            var so = new SerializedObject(asset);
             Vector2 pos = GetNewChildPosition();
+            parentView.ClearSelection();
+            foreach (var ch in CollectChildren(asset)) {
+                parentView.AddToSelection(CreateChild(ch, pos));
+                pos += 100 * Vector2.up;
+            }
+
+            if (asset is GameObject go) {
+                foreach (var comp in go.GetComponents<Component>()) {
+                    foreach (var ch in CollectChildren(comp)) {
+                        parentView.AddToSelection(CreateChild(ch, pos));
+                        pos += 100 * Vector2.up;
+                    }
+                }
+            }
+        }
+
+        private IEnumerable<Object> CollectChildren(Object o) {
+            var so = new SerializedObject(o);
             for (var iter = so.GetIterator(); iter.Next(true);) {
                 if ((iter.propertyType == SerializedPropertyType.ObjectReference || iter.propertyType == SerializedPropertyType.ManagedReference) && iter.objectReferenceValue != null) {
+                    if (iter.objectReferenceValue.GetType() == typeof(Object)) continue;
+                    if (iter.objectReferenceValue is Component comp && comp.gameObject == asset) continue;
+                    if (iter.objectReferenceValue == o) continue;
                     var path = AssetDatabase.GetAssetPath(iter.objectReferenceValue);
                     if (!string.IsNullOrEmpty(path)) {
-                        CreateChild(iter.objectReferenceValue, pos);
-                        pos += 100 * Vector2.up;
+                        yield return iter.objectReferenceValue;
                     }
                 }
             }
@@ -100,12 +123,12 @@ namespace WorkBoard {
             }
         }
 
-        private void CreateChild(string path, Vector2 pos) {
-            CreateChild(AssetDatabase.LoadAssetAtPath<Object>(path), pos);
+        private Node CreateChild(string path, Vector2 pos) {
+            return CreateChild(AssetDatabase.LoadAssetAtPath<Object>(path), pos);
         }
 
-        private void CreateChild(Object o, Vector2 pos) {
-            base.CreateChild(new FileData() { asset = o }, pos);
+        private Node CreateChild(Object o, Vector2 pos) {
+            return base.CreateChild(new FileData() { asset = o }, pos);
         }
 
         private Vector2 GetNewChildPosition() {

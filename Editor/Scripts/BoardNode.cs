@@ -10,7 +10,7 @@ namespace WorkBoard {
         private Port childrenPort;
         private Port parentPort;
 
-        private GraphView parentView => _parentView ??= GetFirstAncestorOfType<GraphView>();
+        protected GraphView parentView => _parentView ??= GetFirstAncestorOfType<GraphView>();
         private GraphView _parentView;
 
         public static BoardNode Create(BoardNodeData data) {
@@ -39,7 +39,7 @@ namespace WorkBoard {
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt) {
         }
 
-        public void CreateChild(BoardNodeData nodeData, Vector2 position) {
+        public Node CreateChild(BoardNodeData nodeData, Vector2 position) {
             var node = Create(nodeData);
             var view = this.parentView;
             if (view is WorkBoardView bv) {
@@ -51,6 +51,8 @@ namespace WorkBoard {
             if (view is WorkBoardView v) {
                 v.OnEdgeAdded(edge);
             }
+
+            return node;
         }
 
         public Edge ConnectChild(BoardNode node) {
