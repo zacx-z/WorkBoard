@@ -9,6 +9,7 @@ namespace WorkBoard {
     using System.Linq;
     using NodeData = WorkBoardData.NodeData;
 
+    [Serializable]
     public class WorkBoardWindow : EditorWindow {
         [MenuItem("Tools/WorkBoard/Open")]
         public static void OpenWindow() {
@@ -73,6 +74,7 @@ namespace WorkBoard {
             _dataMap = new Dictionary<Node, NodeData>();
             RebuildGraph();
 
+            Undo.undoRedoPerformed += OnUndoRedo;
             _graphView.graphViewChanged += OnGraphChanged;
             _graphView.onNodeAdded += OnNodeAdded;
             _graphView.onEdgeAdded += OnEdgeAdded;
@@ -82,12 +84,18 @@ namespace WorkBoard {
             _graphView.elementsRemovedFromGroup += OnElementsRemovedFromGroup;
         }
 
+        private void OnUndoRedo() {
+            _graphView.graphViewChanged -= OnGraphChanged;
+            ClearGraph();
+            RebuildGraph();
+            _graphView.graphViewChanged += OnGraphChanged;
+        }
+
         private void SetTarget(WorkBoardData data) {
             if (data == target) return;
             target = data;
             _graphView.graphViewChanged -= OnGraphChanged;
-            _graphView.DeleteElements(_graphView.graphElements);
-            _dataMap.Clear();
+            ClearGraph();
 
             // load
             nodeData = CloneData(data.nodeData);
@@ -113,6 +121,11 @@ namespace WorkBoard {
             RebuildGraph();
 
             _graphView.graphViewChanged += OnGraphChanged;
+        }
+
+        private void ClearGraph() {
+            _graphView.DeleteElements(_graphView.graphElements);
+            _dataMap.Clear();
         }
 
         private void RebuildGraph() {
@@ -157,6 +170,7 @@ namespace WorkBoard {
         }
 
         private void OnNodeAdded(GraphElement elem, Rect pos) {
+            Undo.RegisterCompleteObjectUndo(this, "Add Node");
             hasUnsavedChanges = true;
 
             if (elem is BoardNode node) {
@@ -169,10 +183,12 @@ namespace WorkBoard {
                 nodeData.Add(data);
                 _dataMap[node] = data;
             }
+            EditorUtility.SetDirty(this);
         }
 
         private GraphViewChange OnGraphChanged(GraphViewChange change) {
             hasUnsavedChanges = true;
+            Undo.RegisterCompleteObjectUndo(this, "Change Graph");
             if (change.movedElements != null) {
                 foreach (var moved in change.movedElements) {
                     if (moved is Node node) {
@@ -226,6 +242,7 @@ namespace WorkBoard {
         }
 
         private void OnGroupAdded(Group group) {
+            Undo.RegisterCompleteObjectUndo(this, "Add Group");
             groupData ??= new List<GroupData>();
             var data = new GroupData()
             {
