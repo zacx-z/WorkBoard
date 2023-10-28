@@ -174,7 +174,7 @@ namespace WorkBoard {
         }
 
         private void OnNodeAdded(GraphElement elem, Rect pos) {
-            Undo.RegisterCompleteObjectUndo(this, "Add Node");
+            Undo.RegisterCompleteObjectUndo(this, "WorkBoard Add Node");
             hasUnsavedChanges = true;
 
             if (elem is BoardNode node) {
@@ -192,7 +192,7 @@ namespace WorkBoard {
 
         private GraphViewChange OnGraphChanged(GraphViewChange change) {
             hasUnsavedChanges = true;
-            Undo.RegisterCompleteObjectUndo(this, "Change Graph");
+            Undo.RegisterCompleteObjectUndo(this, "WorkBoard Change Graph");
             if (change.movedElements != null) {
                 foreach (var moved in change.movedElements) {
                     if (moved is Node node) {
