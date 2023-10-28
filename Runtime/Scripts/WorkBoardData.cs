@@ -56,7 +56,19 @@ namespace WorkBoard {
     public class FileData : BoardNodeData {
         [SerializeField]
         public UnityEngine.Object asset;
+        [SerializeField]
         public bool showInspector;
+
+        [Serializable]
+        public struct ComponentLocator {
+            [SerializeField]
+            public string typeName;
+            [SerializeField]
+            public int index;
+        }
+
+        [SerializeField]
+        public List<ComponentLocator> inspectedComponents;
     }
 
     [Serializable]

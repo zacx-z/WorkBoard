@@ -1,17 +1,17 @@
-using System.Collections.Generic;
-using System.Linq;
-using UnityEditor.Experimental.GraphView;
-
 namespace WorkBoard {
     using System.IO;
+    using System.Linq;
+    using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UIElements;
     using UnityEditor;
     using UnityEditor.UIElements;
+    using UnityEditor.Experimental.GraphView;
 
     public class FileNode : BoardNode<FileData> {
         private Object asset => data.asset;
         private InspectorElement inspectorElement;
+        private Dictionary<Component, InspectorElement> componentInspectors;
 
         public FileNode(FileData data) : base (data){
             this.title = asset.name;
@@ -22,6 +22,26 @@ namespace WorkBoard {
             this.expanded = false;
 
             RefreshInspectorElement();
+
+            if (data.inspectedComponents != null && asset is GameObject go) {
+                componentInspectors = new Dictionary<Component, InspectorElement>();
+                foreach (var c in data.inspectedComponents) {
+                    var type = System.Type.GetType(c.typeName);
+                    // TODO: if type is null, show missing components
+                    var components = go.GetComponents(type);
+                    if (c.index < components.Length) {
+                        var comp =  components[c.index];
+                        var insElem = new InspectorElement(comp)
+                        {
+                            style = { minWidth = 320 }
+                        };
+                        extensionContainer.Add(insElem);
+                        componentInspectors.Add(comp, insElem);
+                    } else {
+                        // TODO: show missing components
+                    }
+                }
+            }
 
             this.mainContainer.RegisterCallback<MouseDownEvent>(OnClick);
         }
@@ -43,6 +63,14 @@ namespace WorkBoard {
                 evt.menu.AppendAction("Expand Children References", ExpandChildrenReferences);
             }
             evt.menu.AppendAction("Show Inspector", ShowInspector, (data.showInspector ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
+            if (data.showInspector && data.asset is GameObject go) {
+                foreach (var comp in go.GetComponents<Component>()) {
+                    var compEnabled = componentInspectors != null && componentInspectors.ContainsKey(comp);
+                    evt.menu.AppendAction($"Inspector/{comp.GetType()}", action => {
+                        ToggleComponentInspectorEnabled(go, comp);
+                    }, (compEnabled ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
+                }
+            }
             evt.menu.AppendSeparator();
             base.BuildContextualMenu(evt);
         }
@@ -83,6 +111,33 @@ namespace WorkBoard {
             }
         }
 
+        private void ToggleComponentInspectorEnabled(GameObject go, Component comp) {
+            componentInspectors ??= new Dictionary<Component, InspectorElement>();
+            data.inspectedComponents ??= new List<FileData.ComponentLocator>();
+            var type = comp.GetType();
+            var typeName = type.AssemblyQualifiedName;
+            int compId = System.Array.IndexOf(go.GetComponents(type), comp);
+
+            if (componentInspectors.TryGetValue(comp, out var ins)) {
+                extensionContainer.Remove(ins);
+                componentInspectors.Remove(comp);
+                data.inspectedComponents.RemoveAll(c => c.typeName == typeName && c.index == compId);
+            } else {
+                var insElem = new InspectorElement(comp)
+                {
+                    style = { minWidth = 320 }
+                };
+                extensionContainer.Add(insElem);
+                componentInspectors.Add(comp, insElem);
+                data.inspectedComponents.Add(new FileData.ComponentLocator()
+                {
+                    typeName = typeName,
+                    index = compId
+                });
+                expanded = true;
+            }
+        }
+
         private IEnumerable<Object> CollectChildren(Object o) {
             var so = new SerializedObject(o);
             for (var iter = so.GetIterator(); iter.Next(true);) {
@@ -114,10 +169,22 @@ namespace WorkBoard {
                     extensionContainer.Add(inspectorElement);
                     expanded = true;
                 }
+
+                if (componentInspectors != null) {
+                    foreach (var ins in componentInspectors.Values) {
+                        ins.style.display = DisplayStyle.Flex;
+                    }
+                }
             } else {
                 if (inspectorElement != null) {
                     extensionContainer.Remove(inspectorElement);
                     inspectorElement = null;
+                }
+
+                if (componentInspectors != null) {
+                    foreach (var ins in componentInspectors.Values) {
+                        ins.style.display = DisplayStyle.None;
+                    }
                 }
             }
         }

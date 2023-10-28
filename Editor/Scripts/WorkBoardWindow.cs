@@ -84,6 +84,10 @@ namespace WorkBoard {
             _graphView.elementsRemovedFromGroup += OnElementsRemovedFromGroup;
         }
 
+        private void OnDisable() {
+            Undo.undoRedoPerformed -= OnUndoRedo;
+        }
+
         private void OnUndoRedo() {
             _graphView.graphViewChanged -= OnGraphChanged;
             ClearGraph();
