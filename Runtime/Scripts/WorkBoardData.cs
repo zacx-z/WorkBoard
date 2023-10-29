@@ -58,6 +58,8 @@ namespace WorkBoard {
         public UnityEngine.Object asset;
         [SerializeField]
         public bool showInspector;
+        [SerializeField]
+        public bool showPreview;
 
         [Serializable]
         public struct ComponentLocator {

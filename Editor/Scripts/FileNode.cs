@@ -5,19 +5,19 @@ namespace WorkBoard {
     using UnityEngine;
     using UnityEngine.UIElements;
     using UnityEditor;
-    using UnityEditor.UIElements;
     using UnityEditor.Experimental.GraphView;
 
     public class FileNode : BoardNode<FileData> {
         private Object asset => data.asset;
         private InspectorElement inspectorElement;
+        private Image previewElement;
         private Dictionary<Component, InspectorElement> componentInspectors;
 
         public FileNode(FileData data) : base (data){
             this.title = asset.name;
             this.titleContainer.Insert(0, new Image()
             {
-                image = AssetDatabase.GetCachedIcon(AssetDatabase.GetAssetPath(asset))
+                image = AssetPreview.GetMiniThumbnail(asset)
             });
             this.expanded = false;
 
@@ -62,6 +62,7 @@ namespace WorkBoard {
             } else {
                 evt.menu.AppendAction("Expand Children References", ExpandChildrenReferences);
             }
+            evt.menu.AppendAction("Show Preview", ShowPreview, (data.showPreview ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
             evt.menu.AppendAction("Show Inspector", ShowInspector, (data.showInspector ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
             if (data.showInspector && data.asset is GameObject go) {
                 foreach (var comp in go.GetComponents<Component>()) {
@@ -156,7 +157,14 @@ namespace WorkBoard {
 
         private void ShowInspector(DropdownMenuAction action) {
             data.showInspector = !data.showInspector;
+            if (data.showInspector) expanded = true;
             RefreshInspectorElement();
+        }
+
+        private void ShowPreview(DropdownMenuAction action) {
+            data.showPreview = !data.showPreview;
+            if (data.showPreview) expanded = true;
+            RefreshPreviewElement();
         }
 
         private void RefreshInspectorElement() {
@@ -167,7 +175,6 @@ namespace WorkBoard {
                         style = { minWidth = 320 }
                     };
                     extensionContainer.Add(inspectorElement);
-                    expanded = true;
                 }
 
                 if (componentInspectors != null) {
@@ -186,6 +193,18 @@ namespace WorkBoard {
                         ins.style.display = DisplayStyle.None;
                     }
                 }
+            }
+        }
+
+        private void RefreshPreviewElement() {
+            if (previewElement != null) {
+                previewElement.style.display = data.showPreview ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            if (previewElement == null && data.showPreview) {
+                previewElement = new Image();
+                previewElement.image = AssetPreview.GetAssetPreview(asset);
+                extensionContainer.Insert(0, previewElement);
             }
         }
 
