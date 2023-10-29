@@ -38,6 +38,11 @@ namespace WorkBoard {
         }
 
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt) {
+            if (this.GetContainingScope() is Group group) {
+                evt.menu.AppendAction("Move Out Of Group", action => {
+                    group.RemoveElement(this);
+                });
+            }
         }
 
         protected void OnWillChange() {
