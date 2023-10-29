@@ -71,6 +71,9 @@ namespace WorkBoard {
 
         [SerializeField]
         public List<ComponentLocator> inspectedComponents;
+
+        [SerializeField]
+        public string activePreviewType;
     }
 
     [Serializable]

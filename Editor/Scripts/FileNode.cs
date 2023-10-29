@@ -1,3 +1,5 @@
+using System;
+
 namespace WorkBoard {
     using System.IO;
     using System.Linq;
@@ -10,8 +12,11 @@ namespace WorkBoard {
     public class FileNode : BoardNode<FileData> {
         private Object asset => data.asset;
         private InspectorElement inspectorElement;
-        private Image previewElement;
+        private Image iconPreviewElement;
         private Dictionary<Component, InspectorElement> componentInspectors;
+        private List<Type> _previews;
+        private ObjectPreview _activePreview;
+        private PreviewElement _previewElement;
 
         public FileNode(FileData data) : base (data){
             this.title = asset.name;
@@ -22,6 +27,8 @@ namespace WorkBoard {
             this.expanded = false;
 
             RefreshInspectorElement();
+
+            if (data.showInspector) this.expanded = true;
 
             if (data.inspectedComponents != null && asset is GameObject go) {
                 componentInspectors = new Dictionary<Component, InspectorElement>();
@@ -43,6 +50,11 @@ namespace WorkBoard {
                 }
             }
 
+            if (!string.IsNullOrEmpty(data.activePreviewType)) {
+                var t = Type.GetType(data.activePreviewType);
+                if (t != null) OpenPreview(t);
+            }
+
             this.mainContainer.RegisterCallback<MouseDownEvent>(OnClick);
         }
 
@@ -62,7 +74,7 @@ namespace WorkBoard {
             } else {
                 evt.menu.AppendAction("Expand Children References", ExpandChildrenReferences);
             }
-            evt.menu.AppendAction("Show Preview", ShowPreview, (data.showPreview ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
+            evt.menu.AppendAction("Show Asset Preview", ShowPreview, (data.showPreview ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
             evt.menu.AppendAction("Show Inspector", ShowInspector, (data.showInspector ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
             if (data.showInspector && data.asset is GameObject go) {
                 foreach (var comp in go.GetComponents<Component>()) {
@@ -71,6 +83,11 @@ namespace WorkBoard {
                         ToggleComponentInspectorEnabled(go, comp);
                     }, (compEnabled ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
                 }
+            }
+
+            _previews ??= InspectorUtils.GetPreviewableTypesForType(asset.GetType()) ?? new List<Type>();
+            foreach (var preview in _previews) {
+                evt.menu.AppendAction($"Preview/{preview.Name}", action => OpenPreview(preview), (_activePreview != null && _activePreview.GetType() == preview ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
             }
             evt.menu.AppendSeparator();
             base.BuildContextualMenu(evt);
@@ -167,6 +184,42 @@ namespace WorkBoard {
             RefreshPreviewElement();
         }
 
+        private void OpenPreview(Type previewType) {
+            if (_activePreview != null && _activePreview.GetType() == previewType) {
+                ClosePreview();
+                data.activePreviewType = null;
+                return;
+            }
+
+            ClosePreview();
+
+            try {
+                _activePreview = InspectorUtils.GetPreviewForTarget(new[] { asset }, previewType);
+                _previewElement = new PreviewElement(asset, _activePreview)
+                {
+                    style = { width = 390, height = 320 }
+                };
+                extensionContainer.Add(_previewElement);
+                data.activePreviewType = previewType.AssemblyQualifiedName;
+
+                expanded = true;
+            }
+            catch (Exception e) {
+                Debug.LogException(e);
+                _activePreview = null;
+                _previewElement = null;
+            }
+        }
+
+        private void ClosePreview() {
+            if (_activePreview != null) _activePreview.Cleanup();
+            if (_previewElement != null) {
+                extensionContainer.Remove(_previewElement);
+            }
+            _activePreview = null;
+            _previewElement = null;
+        }
+
         private void RefreshInspectorElement() {
             if (data.showInspector) {
                 if (inspectorElement == null) {
@@ -197,14 +250,14 @@ namespace WorkBoard {
         }
 
         private void RefreshPreviewElement() {
-            if (previewElement != null) {
-                previewElement.style.display = data.showPreview ? DisplayStyle.Flex : DisplayStyle.None;
+            if (iconPreviewElement != null) {
+                iconPreviewElement.style.display = data.showPreview ? DisplayStyle.Flex : DisplayStyle.None;
             }
 
-            if (previewElement == null && data.showPreview) {
-                previewElement = new Image();
-                previewElement.image = AssetPreview.GetAssetPreview(asset);
-                extensionContainer.Insert(0, previewElement);
+            if (iconPreviewElement == null && data.showPreview) {
+                iconPreviewElement = new Image();
+                iconPreviewElement.image = AssetPreview.GetAssetPreview(asset);
+                extensionContainer.Insert(0, iconPreviewElement);
             }
         }
 
