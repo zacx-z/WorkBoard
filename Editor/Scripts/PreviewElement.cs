@@ -8,13 +8,14 @@ namespace WorkBoard {
         public static GUIStyle preBackground = nameof(preBackground);
         private readonly Object _target;
         private readonly ObjectPreview _preview;
+        private IMGUIContainer _previewElement;
 
         public PreviewElement(Object target, ObjectPreview preview) {
             _target = target;
             _preview = preview;
-            var previewElement = new IMGUIContainer();
-            previewElement.onGUIHandler = DrawPreview;
-            this.hierarchy.Add(previewElement);
+            _previewElement = new IMGUIContainer();
+            _previewElement.onGUIHandler = DrawPreview;
+            this.hierarchy.Add(_previewElement);
         }
 
         private void DrawPreview() {

@@ -12,6 +12,7 @@ namespace WorkBoard {
 
         protected GraphView parentView => _parentView ??= GetFirstAncestorOfType<GraphView>();
         private GraphView _parentView;
+        public event Action onWillChange;
 
         public static BoardNode Create(BoardNodeData data) {
             if (data == null) {
@@ -37,6 +38,10 @@ namespace WorkBoard {
         }
 
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt) {
+        }
+
+        protected void OnWillChange() {
+            onWillChange?.Invoke();
         }
 
         public Node CreateChild(BoardNodeData nodeData, Vector2 position) {

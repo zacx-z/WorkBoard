@@ -37,11 +37,12 @@ namespace WorkBoard {
                     // TODO: if type is null, show missing components
                     var components = go.GetComponents(type);
                     if (c.index < components.Length) {
-                        var comp =  components[c.index];
+                        var comp = components[c.index];
                         var insElem = new InspectorElement(comp)
                         {
                             style = { minWidth = 320 }
                         };
+                        if (!data.showInspector) insElem.style.display = DisplayStyle.None;
                         extensionContainer.Add(insElem);
                         componentInspectors.Add(comp, insElem);
                     } else {
@@ -56,6 +57,14 @@ namespace WorkBoard {
             }
 
             this.mainContainer.RegisterCallback<MouseDownEvent>(OnClick);
+            this.RegisterCallback<DetachFromPanelEvent>(this.OnDetachFromPanel);
+        }
+
+        private void OnDetachFromPanel(DetachFromPanelEvent evt) {
+            if (_activePreview != null) {
+                _activePreview.Cleanup();
+                _activePreview = null;
+            }
         }
 
         private void OnClick(MouseDownEvent e) {
@@ -173,12 +182,14 @@ namespace WorkBoard {
         }
 
         private void ShowInspector(DropdownMenuAction action) {
+            OnWillChange();
             data.showInspector = !data.showInspector;
             if (data.showInspector) expanded = true;
             RefreshInspectorElement();
         }
 
         private void ShowPreview(DropdownMenuAction action) {
+            OnWillChange();
             data.showPreview = !data.showPreview;
             if (data.showPreview) expanded = true;
             RefreshPreviewElement();
@@ -187,6 +198,7 @@ namespace WorkBoard {
         private void OpenPreview(Type previewType) {
             if (_activePreview != null && _activePreview.GetType() == previewType) {
                 ClosePreview();
+                OnWillChange();
                 data.activePreviewType = null;
                 return;
             }
@@ -194,6 +206,7 @@ namespace WorkBoard {
             ClosePreview();
 
             try {
+                OnWillChange();
                 _activePreview = InspectorUtils.GetPreviewForTarget(new[] { asset }, previewType);
                 _previewElement = new PreviewElement(asset, _activePreview)
                 {
@@ -228,6 +241,8 @@ namespace WorkBoard {
                         style = { minWidth = 320 }
                     };
                     extensionContainer.Add(inspectorElement);
+                } else {
+                    inspectorElement.style.display = DisplayStyle.Flex;
                 }
 
                 if (componentInspectors != null) {
@@ -237,8 +252,7 @@ namespace WorkBoard {
                 }
             } else {
                 if (inspectorElement != null) {
-                    extensionContainer.Remove(inspectorElement);
-                    inspectorElement = null;
+                    inspectorElement.style.display = DisplayStyle.None;
                 }
 
                 if (componentInspectors != null) {

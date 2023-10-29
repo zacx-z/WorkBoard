@@ -1,3 +1,5 @@
+using UnityEngine.UIElements;
+
 namespace WorkBoard {
     using System;
     using System.Collections.Generic;
@@ -171,6 +173,11 @@ namespace WorkBoard {
                 Debug.LogException(e);
                 if (nodeData != null) nodeData.Clear();
             }
+
+            foreach (var node in _dataMap.Keys) {
+                if (node is BoardNode bn)
+                    bn.onWillChange += OnNodeWillChange;
+            }
         }
 
         private void OnNodeAdded(GraphElement elem, Rect pos) {
@@ -186,7 +193,15 @@ namespace WorkBoard {
                 };
                 nodeData.Add(data);
                 _dataMap[node] = data;
+
+                node.onWillChange += OnNodeWillChange;
             }
+            EditorUtility.SetDirty(this);
+        }
+
+        private void OnNodeWillChange() {
+            hasUnsavedChanges = true;
+            Undo.RegisterCompleteObjectUndo(this, "Work Board Change Node");
             EditorUtility.SetDirty(this);
         }
 

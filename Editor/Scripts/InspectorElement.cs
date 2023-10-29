@@ -10,24 +10,46 @@ namespace WorkBoard
     public class InspectorElement : VisualElement {
         private readonly Object _target;
         private Editor _editor;
+        private VisualElement _inspectorElement;
         private MethodInfo _isEnabledMethod;
         private static PropertyInfo _currentViewWidthProperty;
 
         public InspectorElement(Object target) {
             _target = target;
 
+            this.RegisterCallback<AttachToPanelEvent>(this.OnAttachToPanel);
+            this.RegisterCallback<DetachFromPanelEvent>(this.OnDetachFromPanel);
+        }
+
+        private void OnAttachToPanel(AttachToPanelEvent evt) {
             Reset();
         }
 
+        private void OnDetachFromPanel(DetachFromPanelEvent evt) {
+            Cleanup();
+        }
+
         private void Reset() {
-            this.Clear();
+            Cleanup();
             if (_target == null) return;
             if (_editor != null) {
                 Object.DestroyImmediate(_editor);
             }
             _editor = GetOrCreateEditor(_target);
-            var child = CreateInspectorElement(_editor);
-            this.hierarchy.Add(child);
+            _inspectorElement = CreateInspectorElement(_editor);
+            this.hierarchy.Add(_inspectorElement);
+        }
+
+        private void Cleanup() {
+            if (_editor != null) {
+                Object.DestroyImmediate(_editor);
+                _editor = null;
+            }
+
+            if (_inspectorElement != null) {
+                this.hierarchy.Remove(_inspectorElement);
+                _inspectorElement = null;
+            }
         }
 
         private Editor GetOrCreateEditor(Object target) {
