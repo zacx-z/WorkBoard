@@ -11,11 +11,10 @@ namespace WorkBoard {
 
     public class FileNode : BoardNode<FileData> {
         private Object asset => data.asset;
-        private InspectorElement inspectorElement;
-        private Image iconPreviewElement;
+        private InspectorElement _inspectorElement;
+        private Image _iconPreviewElement;
         private Dictionary<Component, InspectorElement> componentInspectors;
         private List<Type> _previews;
-        private ObjectPreview _activePreview;
         private PreviewElement _previewElement;
 
         public FileNode(FileData data) : base (data){
@@ -27,6 +26,7 @@ namespace WorkBoard {
             this.expanded = false;
 
             RefreshInspectorElement();
+            RefreshAssetPreviewElement();
 
             if (data.showInspector) this.expanded = true;
 
@@ -57,14 +57,6 @@ namespace WorkBoard {
             }
 
             this.mainContainer.RegisterCallback<MouseDownEvent>(OnClick);
-            this.RegisterCallback<DetachFromPanelEvent>(this.OnDetachFromPanel);
-        }
-
-        private void OnDetachFromPanel(DetachFromPanelEvent evt) {
-            if (_activePreview != null) {
-                _activePreview.Cleanup();
-                _activePreview = null;
-            }
         }
 
         private void OnClick(MouseDownEvent e) {
@@ -96,7 +88,7 @@ namespace WorkBoard {
 
             _previews ??= InspectorUtils.GetPreviewableTypesForType(asset.GetType()) ?? new List<Type>();
             foreach (var preview in _previews) {
-                evt.menu.AppendAction($"Preview/{preview.Name}", action => OpenPreview(preview), (_activePreview != null && _activePreview.GetType() == preview ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
+                evt.menu.AppendAction($"Preview/{preview.Name}", action => OpenPreview(preview), (_previewElement != null && _previewElement.previewType == preview ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
             }
             evt.menu.AppendSeparator();
             base.BuildContextualMenu(evt);
@@ -192,11 +184,11 @@ namespace WorkBoard {
             OnWillChange();
             data.showPreview = !data.showPreview;
             if (data.showPreview) expanded = true;
-            RefreshPreviewElement();
+            RefreshAssetPreviewElement();
         }
 
         private void OpenPreview(Type previewType) {
-            if (_activePreview != null && _activePreview.GetType() == previewType) {
+            if (_previewElement != null && _previewElement.previewType == previewType) {
                 ClosePreview();
                 OnWillChange();
                 data.activePreviewType = null;
@@ -207,8 +199,7 @@ namespace WorkBoard {
 
             try {
                 OnWillChange();
-                _activePreview = InspectorUtils.GetPreviewForTarget(new[] { asset }, previewType);
-                _previewElement = new PreviewElement(asset, _activePreview)
+                _previewElement = new PreviewElement(asset, previewType)
                 {
                     style = { width = 390, height = 320 }
                 };
@@ -219,30 +210,27 @@ namespace WorkBoard {
             }
             catch (Exception e) {
                 Debug.LogException(e);
-                _activePreview = null;
                 _previewElement = null;
             }
         }
 
         private void ClosePreview() {
-            if (_activePreview != null) _activePreview.Cleanup();
             if (_previewElement != null) {
                 extensionContainer.Remove(_previewElement);
             }
-            _activePreview = null;
             _previewElement = null;
         }
 
         private void RefreshInspectorElement() {
             if (data.showInspector) {
-                if (inspectorElement == null) {
-                    inspectorElement = new InspectorElement(asset)
+                if (_inspectorElement == null) {
+                    _inspectorElement = new InspectorElement(asset)
                     {
                         style = { minWidth = 320 }
                     };
-                    extensionContainer.Add(inspectorElement);
+                    extensionContainer.Add(_inspectorElement);
                 } else {
-                    inspectorElement.style.display = DisplayStyle.Flex;
+                    _inspectorElement.style.display = DisplayStyle.Flex;
                 }
 
                 if (componentInspectors != null) {
@@ -251,8 +239,8 @@ namespace WorkBoard {
                     }
                 }
             } else {
-                if (inspectorElement != null) {
-                    inspectorElement.style.display = DisplayStyle.None;
+                if (_inspectorElement != null) {
+                    _inspectorElement.style.display = DisplayStyle.None;
                 }
 
                 if (componentInspectors != null) {
@@ -263,15 +251,18 @@ namespace WorkBoard {
             }
         }
 
-        private void RefreshPreviewElement() {
-            if (iconPreviewElement != null) {
-                iconPreviewElement.style.display = data.showPreview ? DisplayStyle.Flex : DisplayStyle.None;
+        private void RefreshAssetPreviewElement() {
+            if (_iconPreviewElement != null) {
+                _iconPreviewElement.style.display = data.showPreview ? DisplayStyle.Flex : DisplayStyle.None;
             }
 
-            if (iconPreviewElement == null && data.showPreview) {
-                iconPreviewElement = new Image();
-                iconPreviewElement.image = AssetPreview.GetAssetPreview(asset);
-                extensionContainer.Insert(0, iconPreviewElement);
+            if (_iconPreviewElement == null && data.showPreview) {
+                _iconPreviewElement = new Image
+                {
+                    image = AssetPreview.GetAssetPreview(asset)
+                };
+                extensionContainer.Insert(0, _iconPreviewElement);
+                expanded = true;
             }
         }
 
