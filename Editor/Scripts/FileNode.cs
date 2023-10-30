@@ -21,14 +21,22 @@ namespace WorkBoard {
             this.title = asset.name;
             this.titleContainer.Insert(0, new Image()
             {
-                image = AssetPreview.GetMiniThumbnail(asset)
+                image = AssetPreview.GetMiniThumbnail(asset),
+                style =
+                {
+                    maxWidth = 64
+                }
             });
             this.expanded = false;
 
             RefreshInspectorElement();
             RefreshAssetPreviewElement();
 
-            if (data.showInspector) this.expanded = true;
+            if (data.showInspector)
+            {
+                this.expanded = true;
+                RefreshExpandedState();
+            }
 
             if (data.inspectedComponents != null && asset is GameObject go) {
                 componentInspectors = new Dictionary<Component, InspectorElement>();
@@ -154,6 +162,7 @@ namespace WorkBoard {
                     index = compId
                 });
                 expanded = true;
+                RefreshExpandedState();
             }
         }
 
@@ -176,14 +185,17 @@ namespace WorkBoard {
         private void ShowInspector(DropdownMenuAction action) {
             OnWillChange();
             data.showInspector = !data.showInspector;
-            if (data.showInspector) expanded = true;
             RefreshInspectorElement();
+            if (data.showInspector)
+            {
+                expanded = true;
+                RefreshExpandedState();
+            }
         }
 
         private void ShowPreview(DropdownMenuAction action) {
             OnWillChange();
             data.showPreview = !data.showPreview;
-            if (data.showPreview) expanded = true;
             RefreshAssetPreviewElement();
         }
 
@@ -207,6 +219,7 @@ namespace WorkBoard {
                 data.activePreviewType = previewType.AssemblyQualifiedName;
 
                 expanded = true;
+                RefreshExpandedState();
             }
             catch (Exception e) {
                 Debug.LogException(e);
@@ -263,6 +276,7 @@ namespace WorkBoard {
                 };
                 extensionContainer.Insert(0, _iconPreviewElement);
                 expanded = true;
+                RefreshExpandedState();
             }
         }
 
