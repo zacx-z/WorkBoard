@@ -1,27 +1,27 @@
 namespace WorkBoard {
-    using UnityEngine;
+    using System;
     using UnityEngine.UIElements;
+    using UnityEditor.Experimental.GraphView;
 
-    public class NoteNode : BoardNode<NoteData> {
-        public NoteNode(NoteData data) : base(data) {
-            this.title = "Note";
-            var field = new TextField()
-            {
-                style = { flexGrow = 1, minHeight = 150, minWidth = 150 },
-                multiline = true,
-                value = data.note
-            };
-            this.titleContainer.style.height = 16;
-            this.mainContainer.style.backgroundColor = new StyleColor(Color.yellow);
-            this.extensionContainer.Add(field);
-            expanded = true;
-            RefreshExpandedState();
-            
-            field.RegisterCallback<ChangeEvent<string>>(OnTextChanged);
+    [BoardElementDataType(typeof(NoteData))]
+    public class NoteNode : StickyNote, IBoardElement {
+        private readonly NoteData _data;
+        public BoardNodeData Data => _data;
+        public event Action onWillChange;
+
+        public void SubscribeWillChange(Action listener) {
+            onWillChange += listener;
+        }
+
+        public NoteNode(NoteData data) {
+            _data = data;
+            this.contents = data.note;
+            this.Q<TextField>("contents-field").RegisterCallback<ChangeEvent<string>>(OnTextChanged);
         }
 
         private void OnTextChanged(ChangeEvent<string> evt) {
-            data.note = evt.newValue;
+            _data.note = evt.newValue;
+            onWillChange?.Invoke();
         }
     }
 }

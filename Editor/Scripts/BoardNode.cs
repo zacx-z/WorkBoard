@@ -1,14 +1,17 @@
-using UnityEngine.UIElements;
+using System.Linq;
 
 namespace WorkBoard {
     using System;
     using UnityEngine;
+    using UnityEngine.UIElements;
     using UnityEditor.Experimental.GraphView;
 
-    public interface IBoardNode
-    {
-        void SubscribeWillChange(Action listener);
+    public interface IBoardElement {
         BoardNodeData Data { get; }
+        void SubscribeWillChange(Action listener);
+    }
+
+    public interface IBoardNode : IBoardElement {
         Port ParentPort { get; }
         Edge ConnectChild(IBoardNode node);
         void OnConnected();
@@ -36,21 +39,29 @@ namespace WorkBoard {
         private GraphView _parentView;
         public event Action onWillChange;
 
-        public static BoardNode Create(BoardNodeData data) {
+        public static IBoardElement Create(BoardNodeData data) {
             if (data == null) {
                 Debug.LogWarning("data is null");
             }
 
             var dataType = data.GetType();
-            foreach (var type in typeof(BoardNode).Assembly.GetTypes()) {
+            foreach (var type in typeof(IBoardNode).Assembly.GetTypes()) {
                 var baseType = type.BaseType;
-                if (baseType != null && baseType.IsGenericType &&
-                    baseType.GetGenericTypeDefinition() == typeof(BoardNode<>)) {
-                    if (dataType == baseType.GetGenericArguments()[0]) {
-                        return (BoardNode)Activator.CreateInstance(type, data);
+                if (baseType != null) {
+                    if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(BoardNode<>)) {
+                        if (dataType == baseType.GetGenericArguments()[0]) {
+                            return (IBoardElement)Activator.CreateInstance(type, data);
+                        }
+                    }
+
+                    var attr = type.GetCustomAttributes(typeof(BoardElementDataTypeAttribute), true);
+                    if (attr.Length > 0 && (attr[0] as BoardElementDataTypeAttribute).DataType == dataType) {
+                        return (IBoardElement)Activator.CreateInstance(type, data);
                     }
                 }
             }
+
+            Debug.LogError($"Can't find node for {dataType}");
 
             return null;
         }
@@ -71,20 +82,20 @@ namespace WorkBoard {
             onWillChange?.Invoke();
         }
 
-        public Node CreateChild(BoardNodeData nodeData, Vector2 position) {
-            var node = Create(nodeData);
+        public IBoardNode CreateChild(BoardNodeData nodeData, Vector2 position) {
+            var node = (GraphElement)Create(nodeData);
             var view = this.parentView;
             if (view is WorkBoardView bv) {
                 bv.OnCreateNode(node, position);
             }
 
-            var edge = ConnectChild(node);
+            var edge = ConnectChild((IBoardNode)node);
 
             if (view is WorkBoardView v) {
                 v.OnEdgeAdded(edge);
             }
 
-            return node;
+            return (IBoardNode)node;
         }
 
         public void SubscribeWillChange(Action listener) => onWillChange += listener;
@@ -113,10 +124,18 @@ namespace WorkBoard {
         }
     }
 
+    public class BoardElementDataTypeAttribute : Attribute {
+        public readonly Type DataType;
+
+        public BoardElementDataTypeAttribute(Type dataType) {
+            DataType = dataType;
+        }
+    }
+
     public class BoardNode<T> : BoardNode where T : BoardNodeData {
-        public readonly new T data;
+        public readonly new T Data;
         public BoardNode(T data) : base(data) {
-            this.data = data;
+            this.Data = data;
         }
     }
 }

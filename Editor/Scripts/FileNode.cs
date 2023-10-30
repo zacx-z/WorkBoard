@@ -10,7 +10,7 @@ namespace WorkBoard {
     using UnityEditor.Experimental.GraphView;
 
     public class FileNode : BoardNode<FileData> {
-        private Object asset => data.asset;
+        private Object asset => Data.asset;
         private InspectorElement _inspectorElement;
         private Image _iconPreviewElement;
         private Dictionary<Component, InspectorElement> componentInspectors;
@@ -83,9 +83,9 @@ namespace WorkBoard {
             } else {
                 evt.menu.AppendAction("Expand Children References", ExpandChildrenReferences);
             }
-            evt.menu.AppendAction("Show Asset Preview", ShowPreview, (data.showPreview ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
-            evt.menu.AppendAction("Show Inspector", ShowInspector, (data.showInspector ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
-            if (data.showInspector && data.asset is GameObject go) {
+            evt.menu.AppendAction("Show Asset Preview", ShowPreview, (Data.showPreview ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
+            evt.menu.AppendAction("Show Inspector", ShowInspector, (Data.showInspector ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
+            if (Data.showInspector && Data.asset is GameObject go) {
                 foreach (var comp in go.GetComponents<Component>()) {
                     var compEnabled = componentInspectors != null && componentInspectors.ContainsKey(comp);
                     evt.menu.AppendAction($"Inspector/{comp.GetType()}", action => {
@@ -111,13 +111,13 @@ namespace WorkBoard {
             Vector2 pos = GetNewChildPosition();
             parentView.ClearSelection();
             foreach (var subFolder in AssetDatabase.GetSubFolders(path)) {
-                parentView.AddToSelection(CreateChild(subFolder, pos));
+                parentView.AddToSelection((GraphElement)CreateChild(subFolder, pos));
                 pos += 100 * Vector2.up;
             }
 
             foreach (var p in Directory.GetFiles(path, "*", SearchOption.TopDirectoryOnly)) {
                 if (p.EndsWith(".meta")) continue;
-                parentView.AddToSelection(CreateChild(p, pos));
+                parentView.AddToSelection((GraphElement)CreateChild(p, pos));
                 pos += 100 * Vector2.up;
             }
         }
@@ -133,14 +133,14 @@ namespace WorkBoard {
             }
 
             foreach (var ch in children.Distinct()) {
-                parentView.AddToSelection(CreateChild(ch, pos));
+                parentView.AddToSelection((GraphElement)CreateChild(ch, pos));
                 pos += 100 * Vector2.up;
             }
         }
 
         private void ToggleComponentInspectorEnabled(GameObject go, Component comp) {
             componentInspectors ??= new Dictionary<Component, InspectorElement>();
-            data.inspectedComponents ??= new List<FileData.ComponentLocator>();
+            Data.inspectedComponents ??= new List<FileData.ComponentLocator>();
             var type = comp.GetType();
             var typeName = type.AssemblyQualifiedName;
             int compId = System.Array.IndexOf(go.GetComponents(type), comp);
@@ -148,7 +148,7 @@ namespace WorkBoard {
             if (componentInspectors.TryGetValue(comp, out var ins)) {
                 extensionContainer.Remove(ins);
                 componentInspectors.Remove(comp);
-                data.inspectedComponents.RemoveAll(c => c.typeName == typeName && c.index == compId);
+                Data.inspectedComponents.RemoveAll(c => c.typeName == typeName && c.index == compId);
             } else {
                 var insElem = new InspectorElement(comp)
                 {
@@ -156,7 +156,7 @@ namespace WorkBoard {
                 };
                 extensionContainer.Add(insElem);
                 componentInspectors.Add(comp, insElem);
-                data.inspectedComponents.Add(new FileData.ComponentLocator()
+                Data.inspectedComponents.Add(new FileData.ComponentLocator()
                 {
                     typeName = typeName,
                     index = compId
@@ -184,9 +184,9 @@ namespace WorkBoard {
 
         private void ShowInspector(DropdownMenuAction action) {
             OnWillChange();
-            data.showInspector = !data.showInspector;
+            Data.showInspector = !Data.showInspector;
             RefreshInspectorElement();
-            if (data.showInspector)
+            if (Data.showInspector)
             {
                 expanded = true;
                 RefreshExpandedState();
@@ -195,7 +195,7 @@ namespace WorkBoard {
 
         private void ShowPreview(DropdownMenuAction action) {
             OnWillChange();
-            data.showPreview = !data.showPreview;
+            Data.showPreview = !Data.showPreview;
             RefreshAssetPreviewElement();
         }
 
@@ -203,7 +203,7 @@ namespace WorkBoard {
             if (_previewElement != null && _previewElement.previewType == previewType) {
                 ClosePreview();
                 OnWillChange();
-                data.activePreviewType = null;
+                Data.activePreviewType = null;
                 return;
             }
 
@@ -216,7 +216,7 @@ namespace WorkBoard {
                     style = { width = 390, height = 320 }
                 };
                 extensionContainer.Add(_previewElement);
-                data.activePreviewType = previewType.AssemblyQualifiedName;
+                Data.activePreviewType = previewType.AssemblyQualifiedName;
 
                 expanded = true;
                 RefreshExpandedState();
@@ -235,7 +235,7 @@ namespace WorkBoard {
         }
 
         private void RefreshInspectorElement() {
-            if (data.showInspector) {
+            if (Data.showInspector) {
                 if (_inspectorElement == null) {
                     _inspectorElement = new InspectorElement(asset)
                     {
@@ -266,10 +266,10 @@ namespace WorkBoard {
 
         private void RefreshAssetPreviewElement() {
             if (_iconPreviewElement != null) {
-                _iconPreviewElement.style.display = data.showPreview ? DisplayStyle.Flex : DisplayStyle.None;
+                _iconPreviewElement.style.display = Data.showPreview ? DisplayStyle.Flex : DisplayStyle.None;
             }
 
-            if (_iconPreviewElement == null && data.showPreview) {
+            if (_iconPreviewElement == null && Data.showPreview) {
                 _iconPreviewElement = new Image
                 {
                     image = AssetPreview.GetAssetPreview(asset)
@@ -280,11 +280,11 @@ namespace WorkBoard {
             }
         }
 
-        private Node CreateChild(string path, Vector2 pos) {
+        private IBoardNode CreateChild(string path, Vector2 pos) {
             return CreateChild(AssetDatabase.LoadAssetAtPath<Object>(path), pos);
         }
 
-        private Node CreateChild(Object o, Vector2 pos) {
+        private IBoardNode CreateChild(Object o, Vector2 pos) {
             return base.CreateChild(new FileData() { asset = o }, pos);
         }
 

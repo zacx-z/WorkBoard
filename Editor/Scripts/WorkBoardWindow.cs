@@ -137,19 +137,20 @@ namespace WorkBoard {
         private void RebuildGraph() {
             try {
                 if (nodeData != null) {
-                    var nodeMap = new Dictionary<BoardNodeData, IBoardNode>();
+                    var nodeMap = new Dictionary<BoardNodeData, IBoardElement>();
 
                     foreach (var n in nodeData) {
                         var node = BoardNode.Create(n.data);
-                        node.SetPosition(n.position);
-                        _graphView.AddElement(node);
-                        _dataMap[node] = n;
+                        var ge = (GraphElement)node;
+                        ge.SetPosition(n.position);
+                        _graphView.AddElement(ge);
+                        _dataMap[ge] = n;
                         nodeMap[n.data] = node;
                     }
 
                     if (edgeData != null) {
                         foreach (var e in edgeData) {
-                            nodeMap[e.from].ConnectChild(nodeMap[e.to]);
+                            (nodeMap[e.from] as IBoardNode).ConnectChild(nodeMap[e.to] as IBoardNode);
                         }
                     }
 
@@ -175,7 +176,7 @@ namespace WorkBoard {
             }
 
             foreach (var node in _dataMap.Keys) {
-                if (node is IBoardNode bn)
+                if (node is IBoardElement bn)
                     bn.SubscribeWillChange(OnNodeWillChange);
             }
         }
@@ -184,7 +185,7 @@ namespace WorkBoard {
             Undo.RegisterCompleteObjectUndo(this, "WorkBoard Add Node");
             hasUnsavedChanges = true;
 
-            if (elem is IBoardNode node) {
+            if (elem is IBoardElement node) {
                 nodeData ??= new List<NodeData>();
                 var data = new NodeData()
                 {
@@ -228,8 +229,8 @@ namespace WorkBoard {
                     }
 
                     if (deleted is Edge edge) {
-                        var fromData = (edge.output.node as IBoardNode).Data;
-                        var toData = (edge.input.node as IBoardNode).Data;
+                        var fromData = (edge.output.node as IBoardElement).Data;
+                        var toData = (edge.input.node as IBoardElement).Data;
                         edgeData.RemoveAll(d => d.from == fromData && d.to == toData);
                     }
 
@@ -255,8 +256,8 @@ namespace WorkBoard {
             edgeData ??= new List<EdgeData>();
             edgeData.Add(new EdgeData()
             {
-                from = (edge.output.node as IBoardNode).Data,
-                to = (edge.input.node as IBoardNode).Data,
+                from = (edge.output.node as IBoardElement).Data,
+                to = (edge.input.node as IBoardElement).Data,
             });
         }
 
@@ -333,7 +334,7 @@ namespace WorkBoard {
         }
 
         private static List<BoardNodeData> CollectContainedNodes(Group group) {
-            return group.containedElements.Cast<IBoardNode>().Where(n => n != null).Select(n => n.Data).ToList();
+            return group.containedElements.Cast<IBoardElement>().Where(n => n != null).Select(n => n.Data).ToList();
         }
     }
 }

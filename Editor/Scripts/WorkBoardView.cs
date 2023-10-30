@@ -55,7 +55,7 @@ namespace WorkBoard {
         private void SelectAssets(DropdownMenuAction action) {
             Selection.objects = selection.Select(n => {
                 if (n is FileNode f) {
-                    return f.data.asset;
+                    return f.Data.asset;
                 }
 
                 return null;
@@ -78,7 +78,7 @@ namespace WorkBoard {
             OnCreateNode(node, action.eventInfo.mousePosition);
         }
 
-        public void OnCreateNode<T>(T node, Vector2 position) where T : BoardNode {
+        public void OnCreateNode<T>(T node, Vector2 position) where T : GraphElement {
             var rect = node.GetPosition();
             rect.position = position;
             node.SetPosition(rect);
