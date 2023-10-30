@@ -5,10 +5,32 @@ namespace WorkBoard {
     using UnityEngine;
     using UnityEditor.Experimental.GraphView;
 
-    public class BoardNode : Node {
-        public readonly BoardNodeData data;
-        private Port childrenPort;
-        private Port parentPort;
+    public interface IBoardNode
+    {
+        void SubscribeWillChange(Action listener);
+        BoardNodeData Data { get; }
+        Port ParentPort { get; }
+        Edge ConnectChild(IBoardNode node);
+        void OnConnected();
+    }
+
+    public class BoardNode : Node, IBoardNode
+    {
+        private readonly BoardNodeData _data;
+        private Port _childrenPort;
+        private Port _parentPort;
+
+        public BoardNodeData Data => _data;
+        public Port ParentPort {
+            get {
+                if (_parentPort == null) {
+                    _parentPort = Port.Create<Edge>(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, null);
+                    _parentPort.SetEnabled(false);
+                    inputContainer.Add(_parentPort);
+                }
+                return _parentPort;
+            }
+        }
 
         protected GraphView parentView => _parentView ??= GetFirstAncestorOfType<GraphView>();
         private GraphView _parentView;
@@ -34,7 +56,7 @@ namespace WorkBoard {
         }
 
         public BoardNode(BoardNodeData data) {
-            this.data = data;
+            this._data = data;
         }
 
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt) {
@@ -65,29 +87,28 @@ namespace WorkBoard {
             return node;
         }
 
-        public Edge ConnectChild(BoardNode node) {
-            CreateChildrenPort();
-            if (node.parentPort == null) {
-                node.parentPort = Port.Create<Edge>(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, null);
-                node.parentPort.SetEnabled(false);
-                node.inputContainer.Add(node.parentPort);
-            }
+        public void SubscribeWillChange(Action listener) => onWillChange += listener;
 
-            var edge = childrenPort.ConnectTo(node.parentPort);
+        public Edge ConnectChild(IBoardNode node) {
+            CreateChildrenPort();
+
+            var edge = _childrenPort.ConnectTo(node.ParentPort);
             edge.SetEnabled(false);
             parentView.AddElement(edge);
 
             RefreshExpandedState();
-            node.RefreshExpandedState();
+            node.OnConnected();
 
             return edge;
         }
 
+        public void OnConnected() => RefreshExpandedState();
+
         private void CreateChildrenPort() {
-            if (childrenPort == null) {
-                childrenPort = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, null);
-                childrenPort.SetEnabled(false);
-                outputContainer.Add(childrenPort);
+            if (_childrenPort == null) {
+                _childrenPort = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, null);
+                _childrenPort.SetEnabled(false);
+                outputContainer.Add(_childrenPort);
             }
         }
     }

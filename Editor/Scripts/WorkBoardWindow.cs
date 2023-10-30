@@ -57,7 +57,7 @@ namespace WorkBoard {
         [SerializeField]
         private WorkBoardData target;
 
-        private Dictionary<Node, NodeData> _dataMap;
+        private Dictionary<GraphElement, NodeData> _dataMap;
         private Dictionary<Group, GroupData> _groupMap;
         private WorkBoardView _graphView;
 
@@ -73,7 +73,7 @@ namespace WorkBoard {
             rootVisualElement.Add(toolbar);
             rootVisualElement.Add(_graphView);
 
-            _dataMap = new Dictionary<Node, NodeData>();
+            _dataMap = new Dictionary<GraphElement, NodeData>();
             RebuildGraph();
 
             Undo.undoRedoPerformed += OnUndoRedo;
@@ -137,7 +137,7 @@ namespace WorkBoard {
         private void RebuildGraph() {
             try {
                 if (nodeData != null) {
-                    var nodeMap = new Dictionary<BoardNodeData, BoardNode>();
+                    var nodeMap = new Dictionary<BoardNodeData, IBoardNode>();
 
                     foreach (var n in nodeData) {
                         var node = BoardNode.Create(n.data);
@@ -161,7 +161,7 @@ namespace WorkBoard {
                                 title = g.title
                             };
                             foreach (var n in g.containedNodes) {
-                                group.AddElement(nodeMap[n]);
+                                group.AddElement(nodeMap[n] as GraphElement);
                             }
                             _graphView.AddElement(group);
                             _groupMap[group] = g;
@@ -175,8 +175,8 @@ namespace WorkBoard {
             }
 
             foreach (var node in _dataMap.Keys) {
-                if (node is BoardNode bn)
-                    bn.onWillChange += OnNodeWillChange;
+                if (node is IBoardNode bn)
+                    bn.SubscribeWillChange(OnNodeWillChange);
             }
         }
 
@@ -184,17 +184,17 @@ namespace WorkBoard {
             Undo.RegisterCompleteObjectUndo(this, "WorkBoard Add Node");
             hasUnsavedChanges = true;
 
-            if (elem is BoardNode node) {
+            if (elem is IBoardNode node) {
                 nodeData ??= new List<NodeData>();
                 var data = new NodeData()
                 {
-                    data = node.data,
+                    data = node.Data,
                     position = pos
                 };
                 nodeData.Add(data);
-                _dataMap[node] = data;
+                _dataMap[node as GraphElement] = data;
 
-                node.onWillChange += OnNodeWillChange;
+                node.SubscribeWillChange(OnNodeWillChange);
             }
             EditorUtility.SetDirty(this);
         }
@@ -228,8 +228,8 @@ namespace WorkBoard {
                     }
 
                     if (deleted is Edge edge) {
-                        var fromData = (edge.output.node as BoardNode).data;
-                        var toData = (edge.input.node as BoardNode).data;
+                        var fromData = (edge.output.node as IBoardNode).Data;
+                        var toData = (edge.input.node as IBoardNode).Data;
                         edgeData.RemoveAll(d => d.from == fromData && d.to == toData);
                     }
 
@@ -255,8 +255,8 @@ namespace WorkBoard {
             edgeData ??= new List<EdgeData>();
             edgeData.Add(new EdgeData()
             {
-                from = (edge.output.node as BoardNode).data,
-                to = (edge.input.node as BoardNode).data,
+                from = (edge.output.node as IBoardNode).Data,
+                to = (edge.input.node as IBoardNode).Data,
             });
         }
 
@@ -333,7 +333,7 @@ namespace WorkBoard {
         }
 
         private static List<BoardNodeData> CollectContainedNodes(Group group) {
-            return group.containedElements.Cast<BoardNode>().Where(n => n != null).Select(n => n.data).ToList();
+            return group.containedElements.Cast<IBoardNode>().Where(n => n != null).Select(n => n.Data).ToList();
         }
     }
 }
