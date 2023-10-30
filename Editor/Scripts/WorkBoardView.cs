@@ -45,6 +45,15 @@ namespace WorkBoard {
         }
 
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt) {
+            if (selection.Any(e => e is GraphElement ge && ge.GetContainingScope() is Group)) {
+                evt.menu.AppendAction("Move Out Of Group", action => {
+                    foreach (var e in selection) {
+                        if (e is GraphElement ge && ge.GetContainingScope() is Group group) {
+                            group.RemoveElement(ge);
+                        }
+                    }
+                });
+            }
             evt.menu.AppendAction("Select Assets", SelectAssets);
             evt.menu.AppendAction("Create Group", CreateGroup);
             evt.menu.AppendSeparator();
