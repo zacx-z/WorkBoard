@@ -15,11 +15,18 @@ namespace WorkBoard {
 
         public NoteNode(NoteData data) {
             _data = data;
+            this.title = data.title;
             this.contents = data.note;
-            this.Q<TextField>("contents-field").RegisterCallback<ChangeEvent<string>>(OnTextChanged);
+            this.Q<TextField>("title-field").RegisterCallback<ChangeEvent<string>>(OnTitleChanged);
+            this.Q<TextField>("contents-field").RegisterCallback<ChangeEvent<string>>(OnContentsChanged);
         }
 
-        private void OnTextChanged(ChangeEvent<string> evt) {
+        private void OnTitleChanged(ChangeEvent<string> evt) {
+            _data.title = evt.newValue;
+            onWillChange?.Invoke();
+        }
+
+        private void OnContentsChanged(ChangeEvent<string> evt) {
             _data.note = evt.newValue;
             onWillChange?.Invoke();
         }

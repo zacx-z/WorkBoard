@@ -78,6 +78,9 @@ namespace WorkBoard {
 
     [Serializable]
     public class NoteData : BoardNodeData {
+        [SerializeField]
+        public string title;
+        [SerializeField]
         public string note;
     }
 }
