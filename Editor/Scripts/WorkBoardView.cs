@@ -59,6 +59,7 @@ namespace WorkBoard {
             evt.menu.AppendSeparator();
             base.BuildContextualMenu(evt);
             evt.menu.AppendAction("Create Note", CreateNoteNode);
+            evt.menu.AppendAction("Create Label", CreateLabelNode);
         }
 
         private void SelectAssets(DropdownMenuAction action) {
@@ -84,6 +85,11 @@ namespace WorkBoard {
 
         private void CreateNoteNode(DropdownMenuAction action) {
             var node = new NoteNode(new NoteData());
+            OnCreateNode(node, action.eventInfo.mousePosition);
+        }
+
+        private void CreateLabelNode(DropdownMenuAction action) {
+            var node = new LabelNode(new LabelData());
             OnCreateNode(node, action.eventInfo.mousePosition);
         }
 

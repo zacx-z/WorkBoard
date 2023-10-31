@@ -83,4 +83,10 @@ namespace WorkBoard {
         [SerializeField]
         public string note;
     }
+
+    [Serializable]
+    public class LabelData : BoardNodeData {
+        [SerializeField]
+        public string label;
+    }
 }

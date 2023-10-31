@@ -1,0 +1,20 @@
+.label-node {
+    border-radius: 8px;
+    background-color: #3F3F3F;
+    padding: 5px;
+}
+
+:selected > #selection-border {
+    border-color: #44C0FF;
+    border-width: 1px;
+    border-radius: 8px;
+}
+
+.label-node #label {
+    overflow: hidden;
+    white-space: normal;
+}
+
+.label-node #label-field {
+    position: absolute;
+}
