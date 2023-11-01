@@ -25,20 +25,16 @@ namespace WorkBoard
         }
 
         private void OnAttachToPanel(AttachToPanelEvent evt) {
-            Reset();
+            Init();
         }
 
         private void OnDetachFromPanel(DetachFromPanelEvent evt) {
             Cleanup();
         }
 
-        private void Reset() {
-            Cleanup();
+        private void Init() {
             if (_target == null) return;
-            if (Editor != null) {
-                Object.DestroyImmediate(Editor);
-            }
-            _editor = GetOrCreateEditor(_target);
+            _editor ??= GetOrCreateEditor(_target);
             _inspectorElement = CreateInspectorElement(Editor);
             this.hierarchy.Add(_inspectorElement);
         }

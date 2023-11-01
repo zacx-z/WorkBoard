@@ -48,7 +48,7 @@ namespace WorkBoard {
                     var components = go.GetComponents(type);
                     if (c.index < components.Length) {
                         var comp = components[c.index];
-                        var insElem = new InspectorElement(comp, _cachedEditor)
+                        var insElem = new InspectorElement(comp)
                         {
                             style = { minWidth = 320 }
                         };
@@ -74,6 +74,11 @@ namespace WorkBoard {
             if (_previews != null) {
                 _previews.ForEach(p => p.Cleanup());
                 _previews.Clear();
+            }
+
+            if (_cachedEditor != null) {
+                Debug.Log("destroy editor");
+                Object.DestroyImmediate(_cachedEditor);
             }
         }
 
@@ -184,19 +189,19 @@ namespace WorkBoard {
             Data.inspectedComponents ??= new List<FileData.ComponentLocator>();
             var type = comp.GetType();
             var typeName = type.AssemblyQualifiedName;
-            int compId = System.Array.IndexOf(go.GetComponents(type), comp);
+            int compId = Array.IndexOf(go.GetComponents(type), comp);
 
             if (componentInspectors.TryGetValue(comp, out var ins)) {
                 extensionContainer.Remove(ins);
                 componentInspectors.Remove(comp);
                 Data.inspectedComponents.RemoveAll(c => c.typeName == typeName && c.index == compId);
             } else {
-                var insElem = new InspectorElement(comp, _cachedEditor)
+                var compInsElem = new InspectorElement(comp)
                 {
                     style = { minWidth = 320 }
                 };
-                extensionContainer.Add(insElem);
-                componentInspectors.Add(comp, insElem);
+                extensionContainer.Add(compInsElem);
+                componentInspectors.Add(comp, compInsElem);
                 Data.inspectedComponents.Add(new FileData.ComponentLocator()
                 {
                     typeName = typeName,
