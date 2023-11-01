@@ -74,10 +74,9 @@ namespace WorkBoard {
         private void UpdateTextFieldRect()
         {
             Rect layout = _label.layout;
-            _label.parent.ChangeCoordinatesTo(_label.parent, layout);
             _textField.style.left = layout.xMin - 1f;
-            _textField.style.right = layout.yMin + this._label.resolvedStyle.marginTop;
-            _textField.style.width = layout.width - this._label.resolvedStyle.marginLeft - this._label.resolvedStyle.marginRight;
+            _textField.style.top = layout.yMin + this._label.resolvedStyle.marginTop - 1;
+            _textField.style.width = layout.width - this._label.resolvedStyle.marginLeft - this._label.resolvedStyle.marginRight + 4;
             _textField.style.height = layout.height - this._label.resolvedStyle.marginTop - this._label.resolvedStyle.marginBottom;
         }
 
