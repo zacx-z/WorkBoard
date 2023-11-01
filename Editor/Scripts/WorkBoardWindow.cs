@@ -303,22 +303,25 @@ namespace WorkBoard {
             target.nodeData = CloneData(nodeData);
 
             target.edgeData = new List<WorkBoardData.EdgeData>();
-            foreach (var edge in edgeData) {
-                target.edgeData.Add(new WorkBoardData.EdgeData()
-                {
-                    fromIndex = nodeData.FindIndex(n => n.data == edge.from),
-                    toIndex = nodeData.FindIndex(n => n.data == edge.to),
-                });
+            if (edgeData != null) {
+                foreach (var edge in edgeData) {
+                    target.edgeData.Add(new WorkBoardData.EdgeData() {
+                        fromIndex = nodeData.FindIndex(n => n.data == edge.from),
+                        toIndex = nodeData.FindIndex(n => n.data == edge.to),
+                    });
+                }
             }
 
             target.groupData = new List<WorkBoardData.GroupData>();
-            foreach (var group in groupData) {
-                var data = new WorkBoardData.GroupData()
-                {
-                    title = group.title,
-                    containedNodes = group.containedNodes.Select(node => nodeData.FindIndex(n => n.data == node)).ToArray()
-                };
-                target.groupData.Add(data);
+            if (groupData != null) {
+                foreach (var group in groupData) {
+                    var data = new WorkBoardData.GroupData() {
+                        title = group.title,
+                        containedNodes = group.containedNodes
+                            .Select(node => nodeData.FindIndex(n => n.data == node)).ToArray()
+                    };
+                    target.groupData.Add(data);
+                }
             }
 
             EditorUtility.SetDirty(target);
