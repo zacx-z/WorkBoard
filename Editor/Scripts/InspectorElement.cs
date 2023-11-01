@@ -14,6 +14,8 @@ namespace WorkBoard
         private MethodInfo _isEnabledMethod;
         private static PropertyInfo _currentViewWidthProperty;
 
+        public Editor Editor => _editor;
+
         public InspectorElement(Object target) {
             _target = target;
 
@@ -32,17 +34,17 @@ namespace WorkBoard
         private void Reset() {
             Cleanup();
             if (_target == null) return;
-            if (_editor != null) {
-                Object.DestroyImmediate(_editor);
+            if (Editor != null) {
+                Object.DestroyImmediate(Editor);
             }
             _editor = GetOrCreateEditor(_target);
-            _inspectorElement = CreateInspectorElement(_editor);
+            _inspectorElement = CreateInspectorElement(Editor);
             this.hierarchy.Add(_inspectorElement);
         }
 
         private void Cleanup() {
-            if (_editor != null) {
-                Object.DestroyImmediate(_editor);
+            if (Editor != null) {
+                Object.DestroyImmediate(Editor);
                 _editor = null;
             }
 

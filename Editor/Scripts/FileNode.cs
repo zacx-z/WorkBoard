@@ -14,7 +14,8 @@ namespace WorkBoard {
         private InspectorElement _inspectorElement;
         private Image _iconPreviewElement;
         private Dictionary<Component, InspectorElement> componentInspectors;
-        private List<Type> _previews;
+        private List<Type> _previewTypes;
+        private List<ObjectPreview> _previews;
         private PreviewElement _previewElement;
 
         public FileNode(FileData data) : base (data){
@@ -61,10 +62,18 @@ namespace WorkBoard {
 
             if (!string.IsNullOrEmpty(data.activePreviewType)) {
                 var t = Type.GetType(data.activePreviewType);
-                if (t != null) OpenPreview(t);
+                if (t != null) OpenPreview(t, null);
             }
 
+            this.RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanelEvent);
             this.mainContainer.RegisterCallback<MouseDownEvent>(OnClick);
+        }
+
+        private void OnDetachFromPanelEvent(DetachFromPanelEvent evt) {
+            if (_previews != null) {
+                _previews.ForEach(p => p.Cleanup());
+                _previews.Clear();
+            }
         }
 
         private void OnClick(MouseDownEvent e) {
@@ -94,9 +103,32 @@ namespace WorkBoard {
                 }
             }
 
-            _previews ??= InspectorUtils.GetPreviewableTypesForType(asset.GetType()) ?? new List<Type>();
-            foreach (var preview in _previews) {
-                evt.menu.AppendAction($"Preview/{preview.Name}", action => OpenPreview(preview), (_previewElement != null && _previewElement.previewType == preview ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
+            _previewTypes ??= InspectorUtils.GetPreviewableTypesForType(asset.GetType()) ?? new List<Type>();
+            if (_previews != null) {
+                _previews.ForEach(p => p.Cleanup());
+                _previews.Clear();
+            }
+
+            _previews ??= new List<ObjectPreview>();
+            foreach (var previewType in _previewTypes) {
+                var preview = InspectorUtils.GetPreviewForTarget(new[] { asset }, previewType);
+                if (preview.HasPreviewGUI()) {
+                    _previews.Add(preview);
+                    evt.menu.AppendAction($"Preview/{previewType.Name}", action => OpenPreview(previewType, preview != null ? new ObjectPreviewProvider(preview) : null),
+                        (_previewElement != null && _previewElement.previewType == previewType
+                            ? DropdownMenuAction.Status.Checked
+                            : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
+                } else {
+                    preview.Cleanup();
+                }
+            }
+
+            if (_inspectorElement != null && _inspectorElement.Editor != null && _inspectorElement.Editor.HasPreviewGUI()) {
+                var previewType = _inspectorElement.Editor.GetType();
+                evt.menu.AppendAction($"Preview/{_inspectorElement.Editor.GetType()}", action => OpenPreview(previewType, new EditorPreviewProvider(_inspectorElement.Editor))
+                        , (_previewElement != null && _previewElement.previewType == previewType
+                            ? DropdownMenuAction.Status.Checked
+                            : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
             }
             evt.menu.AppendSeparator();
             base.BuildContextualMenu(evt);
@@ -199,7 +231,7 @@ namespace WorkBoard {
             RefreshAssetPreviewElement();
         }
 
-        private void OpenPreview(Type previewType) {
+        private void OpenPreview(Type previewType, IPreviewProvider preview) {
             if (_previewElement != null && _previewElement.previewType == previewType) {
                 ClosePreview();
                 OnWillChange();
@@ -209,9 +241,13 @@ namespace WorkBoard {
 
             ClosePreview();
 
+            if (preview != null && preview is ObjectPreviewProvider op) {
+                _previews.Remove(op.preview);
+            }
+
             try {
                 OnWillChange();
-                _previewElement = new PreviewElement(asset, previewType)
+                _previewElement = new PreviewElement(asset, previewType, preview)
                 {
                     style = { width = 390, height = 320 }
                 };
