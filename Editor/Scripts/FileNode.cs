@@ -17,6 +17,7 @@ namespace WorkBoard {
         private List<Type> _previewTypes;
         private List<ObjectPreview> _previews;
         private PreviewElement _previewElement;
+        private Editor _cachedEditor;
 
         public FileNode(FileData data) : base (data){
             this.title = asset.name;
@@ -47,7 +48,7 @@ namespace WorkBoard {
                     var components = go.GetComponents(type);
                     if (c.index < components.Length) {
                         var comp = components[c.index];
-                        var insElem = new InspectorElement(comp)
+                        var insElem = new InspectorElement(comp, _cachedEditor)
                         {
                             style = { minWidth = 320 }
                         };
@@ -123,9 +124,17 @@ namespace WorkBoard {
                 }
             }
 
-            if (_inspectorElement != null && _inspectorElement.Editor != null && _inspectorElement.Editor.HasPreviewGUI()) {
-                var previewType = _inspectorElement.Editor.GetType();
-                evt.menu.AppendAction($"Preview/{_inspectorElement.Editor.GetType()}", action => OpenPreview(previewType, new EditorPreviewProvider(_inspectorElement.Editor))
+            if (_inspectorElement != null && _inspectorElement.Editor != null) {
+                _cachedEditor = _inspectorElement.Editor;
+            }
+
+            if (_cachedEditor == null) {
+                _cachedEditor = Editor.CreateEditor(asset);
+            }
+
+            if (_cachedEditor.HasPreviewGUI()) {
+                var previewType = _cachedEditor.GetType();
+                evt.menu.AppendAction($"Preview/{_cachedEditor.GetType()}", action => OpenPreview(previewType, new EditorPreviewProvider(_cachedEditor))
                         , (_previewElement != null && _previewElement.previewType == previewType
                             ? DropdownMenuAction.Status.Checked
                             : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
@@ -182,7 +191,7 @@ namespace WorkBoard {
                 componentInspectors.Remove(comp);
                 Data.inspectedComponents.RemoveAll(c => c.typeName == typeName && c.index == compId);
             } else {
-                var insElem = new InspectorElement(comp)
+                var insElem = new InspectorElement(comp, _cachedEditor)
                 {
                     style = { minWidth = 320 }
                 };
@@ -273,7 +282,7 @@ namespace WorkBoard {
         private void RefreshInspectorElement() {
             if (Data.showInspector) {
                 if (_inspectorElement == null) {
-                    _inspectorElement = new InspectorElement(asset)
+                    _inspectorElement = new InspectorElement(asset, _cachedEditor)
                     {
                         style = { minWidth = 320 }
                     };

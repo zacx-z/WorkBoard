@@ -16,8 +16,9 @@ namespace WorkBoard
 
         public Editor Editor => _editor;
 
-        public InspectorElement(Object target) {
+        public InspectorElement(Object target, Editor editor = null) {
             _target = target;
+            _editor = editor;
 
             this.RegisterCallback<AttachToPanelEvent>(this.OnAttachToPanel);
             this.RegisterCallback<DetachFromPanelEvent>(this.OnDetachFromPanel);
