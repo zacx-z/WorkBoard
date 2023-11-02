@@ -85,12 +85,13 @@ namespace WorkBoard {
 
         private void CreateNoteNode(DropdownMenuAction action) {
             var node = new NoteNode(new NoteData());
-            OnCreateNode(node, action.eventInfo.mousePosition);
+            OnCreateNode(node, contentViewContainer.WorldToLocal(action.eventInfo.mousePosition));
         }
 
         private void CreateLabelNode(DropdownMenuAction action) {
             var node = new LabelNode(new LabelData());
-            OnCreateNode(node, action.eventInfo.mousePosition);
+
+            OnCreateNode(node, contentViewContainer.WorldToLocal(action.eventInfo.mousePosition));
         }
 
         public void OnCreateNode<T>(T node, Vector2 position) where T : GraphElement {

@@ -19,13 +19,15 @@ namespace WorkBoard {
 
         public LabelNode(LabelData data) {
             _data = data;
+            data.label ??= "New Label";
+
             this.styleSheets.Add(EditorGUIUtility.Load("StyleSheets/GraphView/Selectable.uss") as StyleSheet);
             this.styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.nelasystem.workboard/Editor/StyleSheets/LabelNode.uss"));
 
             this.capabilities = Capabilities.Selectable | Capabilities.Movable | Capabilities.Deletable | Capabilities.Ascendable | Capabilities.Copiable;
             this.hierarchy.Add(_label = new Label()
             {
-                text = "New Label",
+                text = data.label,
                 name = "label"
             });
             this.hierarchy.Add(_textField = new TextField()
@@ -90,6 +92,7 @@ namespace WorkBoard {
           double width = layout.width;
           layout = this.layout;
           double height = layout.height;
+          Debug.Log($"{left} {top}");
           return new Rect((float) left, (float) top, (float) width, (float) height);
         }
 

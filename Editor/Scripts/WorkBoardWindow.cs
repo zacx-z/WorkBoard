@@ -211,19 +211,18 @@ namespace WorkBoard {
             Undo.RegisterCompleteObjectUndo(this, "WorkBoard Change Graph");
             if (change.movedElements != null) {
                 foreach (var moved in change.movedElements) {
-                    if (moved is Node node) {
-                        if (_dataMap.TryGetValue(node, out var data)) {
-                            data.position = moved.GetPosition();
-                        }
+                    if (_dataMap.TryGetValue(moved, out var data)) {
+                        data.position = moved.GetPosition();
                     }
                 }
             }
 
             if (change.elementsToRemove != null) {
                 foreach (var deleted in change.elementsToRemove) {
-                    if (deleted is Node node) {
-                        if (_dataMap.TryGetValue(node, out var data)) {
-                            _dataMap.Remove(node);
+                    {
+                        if (_dataMap.TryGetValue(deleted, out var data))
+                        {
+                            _dataMap.Remove(deleted);
                             nodeData.Remove(data);
                         }
                     }
