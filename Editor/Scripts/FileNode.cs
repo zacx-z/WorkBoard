@@ -63,7 +63,10 @@ namespace WorkBoard {
 
             if (!string.IsNullOrEmpty(data.activePreviewType)) {
                 var t = Type.GetType(data.activePreviewType);
-                if (t != null) OpenPreview(t, null);
+                if (t != null)
+                {
+                    OpenPreview(t, typeof(Editor).IsAssignableFrom(t) ? new EditorPreviewProvider(_cachedEditor ??= Editor.CreateEditor(asset)) : null);
+                }
             }
 
             this.RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanelEvent);
@@ -77,7 +80,6 @@ namespace WorkBoard {
             }
 
             if (_cachedEditor != null) {
-                Debug.Log("destroy editor");
                 Object.DestroyImmediate(_cachedEditor);
             }
         }

@@ -50,7 +50,7 @@ namespace WorkBoard {
             }
         }
     }
-    
+
     public interface IPreviewProvider {
         void Cleanup();
         bool HasPreviewGUI();
@@ -58,7 +58,7 @@ namespace WorkBoard {
         void OnPreviewSettings();
         void DrawPreview(Rect previewArea);
     }
-    
+
     public class ObjectPreviewProvider : IPreviewProvider {
         public ObjectPreview preview;
 
