@@ -37,7 +37,7 @@ namespace WorkBoard {
             if (flag) thatControlsPreview.OnPreviewSettings();
             EditorGUILayout.EndHorizontal();
 
-            var previewArea = GUILayoutUtility.GetRect(0.0f, 1024f, 64f, 1024f);
+            var previewArea = GUILayoutUtility.GetRect(0.0f, 320f, 64f, 320f);
             if (Event.current.type == EventType.Repaint) NodeStyles.preBackground.Draw(previewArea, false, false, false, false);
             if (thatControlsPreview == null || !thatControlsPreview.HasPreviewGUI()) return;
             thatControlsPreview.DrawPreview(previewArea);

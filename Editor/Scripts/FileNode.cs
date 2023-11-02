@@ -263,10 +263,7 @@ namespace WorkBoard {
 
             try {
                 OnWillChange();
-                _previewElement = new PreviewElement(asset, previewType, preview)
-                {
-                    style = { width = 390, height = 320 }
-                };
+                _previewElement = new PreviewElement(asset, previewType, preview);
                 extensionContainer.Add(_previewElement);
                 Data.activePreviewType = previewType.AssemblyQualifiedName;
 
