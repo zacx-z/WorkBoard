@@ -69,6 +69,9 @@ namespace WorkBoard {
                 style = { flexGrow = 1 }
             };
             var toolbar = new Toolbar();
+            toolbar.Add(new ToolbarButton(OpenCreateMenu) { text = "Create ▾" });
+            toolbar.Add(new VisualElement() { style = { flexGrow = 1 }});
+            toolbar.Add(new ToolbarButton(SelectBoardAsset) { text = "Select Board" });
             toolbar.Add(new ToolbarButton(SaveChanges) { text = "Save" });
             rootVisualElement.Add(toolbar);
             rootVisualElement.Add(_graphView);
@@ -284,6 +287,17 @@ namespace WorkBoard {
 
         private void OnElementsRemovedFromGroup(Group group, IEnumerable<GraphElement> elems) {
             _groupMap[group].containedNodes = CollectContainedNodes(group);
+        }
+        
+        private void OpenCreateMenu() {
+            var menu = new GenericMenu();
+            menu.AddItem(new GUIContent("Note"), false, () => _graphView.CreateNoteNode());
+            menu.AddItem(new GUIContent("Label"), false, () => _graphView.CreateLabelNode());
+            menu.ShowAsContext();
+        }
+
+        private void SelectBoardAsset() {
+            Selection.activeObject = target;
         }
 
         public override void SaveChanges() {

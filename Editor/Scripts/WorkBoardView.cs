@@ -83,15 +83,20 @@ namespace WorkBoard {
             onGroupAdded?.Invoke(group);
         }
 
-        private void CreateNoteNode(DropdownMenuAction action) {
+        public void CreateNoteNode(DropdownMenuAction action = null) {
             var node = new NoteNode(new NoteData());
-            OnCreateNode(node, contentViewContainer.WorldToLocal(action.eventInfo.mousePosition));
+            var pos = action != null ? contentViewContainer.WorldToLocal(action.eventInfo.mousePosition) : GetViewCenterPos();
+            OnCreateNode(node, pos);
         }
 
-        private void CreateLabelNode(DropdownMenuAction action) {
+        public void CreateLabelNode(DropdownMenuAction action = null) {
             var node = new LabelNode(new LabelData());
+            var pos = action != null ? contentViewContainer.WorldToLocal(action.eventInfo.mousePosition) : GetViewCenterPos();
+            OnCreateNode(node, pos);
+        }
 
-            OnCreateNode(node, contentViewContainer.WorldToLocal(action.eventInfo.mousePosition));
+        private Vector2 GetViewCenterPos() {
+            return (Vector2)viewTransform.position + this.layout.max / 2;
         }
 
         public void OnCreateNode<T>(T node, Vector2 position) where T : GraphElement {
