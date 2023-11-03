@@ -147,6 +147,7 @@ namespace WorkBoard {
                             : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
             }
             evt.menu.AppendSeparator();
+            evt.menu.AppendAction("Open Inspector Window", action => EditorUtility.OpenPropertyEditor(asset));
             base.BuildContextualMenu(evt);
         }
 
