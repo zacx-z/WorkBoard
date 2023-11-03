@@ -1,10 +1,8 @@
-using System.IO;
-using UnityEngine.UIElements;
-
 namespace WorkBoard {
     using System;
     using System.Collections.Generic;
     using UnityEngine;
+    using UnityEngine.UIElements;
     using UnityEditor;
     using UnityEditor.Callbacks;
     using UnityEditor.Experimental.GraphView;
@@ -23,13 +21,24 @@ namespace WorkBoard {
         public static bool OnOpenBoard(int instanceID) {
             var o = EditorUtility.InstanceIDToObject(instanceID);
             if (o is WorkBoardData data) {
-                var win = GetWindow<WorkBoardWindow>();
-                win.Show();
-                win.SetTarget(data);
+                OpenBoard(data);
                 return true;
             }
 
             return false;
+        }
+
+        public static void OpenBoard(WorkBoardData target) {
+            var win = GetWindow<WorkBoardWindow>();
+            win.Show();
+            win.SetTarget(target);
+        }
+
+        public static void OpenBoardInNewWindow(WorkBoardData target) {
+            var win = CreateWindow<WorkBoardWindow>(typeof(WorkBoardWindow));
+            win.Show();
+            win.SetTarget(target);
+            win.Focus();
         }
 
         [Serializable]
