@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine.UIElements;
 
 namespace WorkBoard {
@@ -60,18 +61,21 @@ namespace WorkBoard {
         private Dictionary<GraphElement, NodeData> _dataMap;
         private Dictionary<Group, GroupData> _groupMap;
         private WorkBoardView _graphView;
+        private ToolbarButton _selectButton;
 
         private void OnEnable() {
-            titleContent = new GUIContent("WorkBoard");
+            titleContent = new GUIContent(target == null ? "New WorkBoard" : target.name);
 
             _graphView = new WorkBoardView()
             {
                 style = { flexGrow = 1 }
             };
             var toolbar = new Toolbar();
+            toolbar.Add(new ToolbarButton(OnOpenMenu) { text = "Open ..." });
             toolbar.Add(new ToolbarButton(OpenCreateMenu) { text = "Create ▾" });
             toolbar.Add(new VisualElement() { style = { flexGrow = 1 }});
-            toolbar.Add(new ToolbarButton(SelectBoardAsset) { text = "Select Board" });
+            _selectButton = new ToolbarButton(SelectBoardAsset) { text = "Select Board" };
+            toolbar.Add(_selectButton);
             toolbar.Add(new ToolbarButton(SaveChanges) { text = "Save" });
             rootVisualElement.Add(toolbar);
             rootVisualElement.Add(_graphView);
@@ -87,10 +91,23 @@ namespace WorkBoard {
             _graphView.groupTitleChanged = OnGroupTitleChanged;
             _graphView.elementsAddedToGroup += OnElementsAddedToGroup;
             _graphView.elementsRemovedFromGroup += OnElementsRemovedFromGroup;
+
+            _selectButton.SetEnabled(target != null);
         }
 
         private void OnDisable() {
             Undo.undoRedoPerformed -= OnUndoRedo;
+        }
+
+        private void OnGUI() {
+            if (Event.current.type == EventType.ExecuteCommand) {
+                if (Event.current.commandName == "ObjectSelectorClosed") {
+                    var obj = EditorGUIUtility.GetObjectPickerObject();
+                    if (obj is WorkBoardData board) {
+                        SetTarget(board);
+                    }
+                }
+            }
         }
 
         private void OnUndoRedo() {
@@ -130,6 +147,13 @@ namespace WorkBoard {
             RebuildGraph();
 
             _graphView.graphViewChanged += OnGraphChanged;
+
+            OnTargetChanged();
+        }
+
+        private void OnTargetChanged() {
+            if (target != null) titleContent = new GUIContent(target.name);
+            _selectButton.SetEnabled(target != null);
         }
 
         private void ClearGraph() {
@@ -288,6 +312,10 @@ namespace WorkBoard {
         private void OnElementsRemovedFromGroup(Group group, IEnumerable<GraphElement> elems) {
             _groupMap[group].containedNodes = CollectContainedNodes(group);
         }
+
+        private void OnOpenMenu() {
+            EditorGUIUtility.ShowObjectPicker<WorkBoardData>(null, false, "", 0);
+        }
         
         private void OpenCreateMenu() {
             var menu = new GenericMenu();
@@ -306,6 +334,7 @@ namespace WorkBoard {
                 target = CreateInstance<WorkBoardData>();
                 SaveToTarget();
                 AssetDatabase.CreateAsset(target, path);
+                OnTargetChanged();
             } else {
                 SaveToTarget();
             }
@@ -338,6 +367,10 @@ namespace WorkBoard {
             }
 
             EditorUtility.SetDirty(target);
+        }
+
+        public override IEnumerable<Type> GetExtraPaneTypes() {
+            yield return typeof(WorkBoardWindow);
         }
 
         private static List<NodeData> CloneData(List<NodeData> data) {
