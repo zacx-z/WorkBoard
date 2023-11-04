@@ -11,6 +11,7 @@ namespace WorkBoard {
 
     public class FileNode : BoardNode<FileData> {
         private Object asset => Data.asset;
+        private bool isAssetMissing => asset == null;
         private InspectorElement _inspectorElement;
         private Image _iconPreviewElement;
         private Dictionary<Component, InspectorElement> componentInspectors;
@@ -20,6 +21,12 @@ namespace WorkBoard {
         private Editor _cachedEditor;
 
         public FileNode(FileData data) : base (data){
+            if (isAssetMissing) {
+                this.title = "Missing Asset";
+                this.titleContainer.style.backgroundColor = new Color(1f, 0.1f, 0.1f, 0.8f);
+                expanded = false;
+                return;
+            }
             this.title = asset.name;
             this.titleContainer.Insert(0, new Image()
             {
@@ -43,9 +50,8 @@ namespace WorkBoard {
             if (data.inspectedComponents != null && asset is GameObject go) {
                 componentInspectors = new Dictionary<Component, InspectorElement>();
                 foreach (var c in data.inspectedComponents) {
-                    var type = System.Type.GetType(c.typeName);
-                    // TODO: if type is null, show missing components
-                    var components = go.GetComponents(type);
+                    var type = Type.GetType(c.typeName);
+                    var components = type != null ? go.GetComponents(type) : Array.Empty<Component>();
                     if (c.index < components.Length) {
                         var comp = components[c.index];
                         var insElem = new InspectorElement(comp)
@@ -56,7 +62,11 @@ namespace WorkBoard {
                         extensionContainer.Add(insElem);
                         componentInspectors.Add(comp, insElem);
                     } else {
-                        // TODO: show missing components
+                        var missingPrompt = new TextElement()
+                        {
+                            text = type == null ? $"Missing type {c.typeName}" : $"Missing component of {type}"
+                        };
+                        extensionContainer.Add(missingPrompt);
                     }
                 }
             }
@@ -66,6 +76,8 @@ namespace WorkBoard {
                 if (t != null)
                 {
                     OpenPreview(t, typeof(Editor).IsAssignableFrom(t) ? new EditorPreviewProvider(_cachedEditor ??= Editor.CreateEditor(asset)) : null);
+                } else {
+                    Debug.LogWarning($"Can't find type `{data.activePreviewType}` to open the preview of that type.");
                 }
             }
 
@@ -91,6 +103,10 @@ namespace WorkBoard {
         }
 
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt) {
+            if (isAssetMissing) {
+                base.BuildContextualMenu(evt);
+                return;
+            }
             evt.menu.AppendAction("Ping", PingAsset);
             if (asset is DefaultAsset) {
                 var path = AssetDatabase.GetAssetPath(asset);
