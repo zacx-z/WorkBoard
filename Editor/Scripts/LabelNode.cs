@@ -39,6 +39,7 @@ namespace WorkBoard {
             _textField.Q(TextInputBaseField<string>.textInputUssName).RegisterCallback<BlurEvent>(OnTextBlur);
 
             _label.RegisterCallback<MouseDownEvent>(OnLabelMouseDown);
+            _label.AddManipulator(new ContextualMenuManipulator(BuildContextualMenu));
             this.hierarchy.Add(new VisualElement()
             {
                 name = "selection-border",
@@ -46,6 +47,26 @@ namespace WorkBoard {
             });
             this.AddToClassList("selectable");
             this.AddToClassList("label-node");
+            this.AddToClassList("size-medium");
+        }
+
+        private void BuildContextualMenu(ContextualMenuPopulateEvent evt) {
+            evt.menu.AppendAction("Large Text Size", action => {
+                this.RemoveFromClassList("size-medium");
+                this.RemoveFromClassList("size-small");
+                this.AddToClassList("size-large");
+            });
+            evt.menu.AppendAction("Medium Text Size", action => {
+                this.RemoveFromClassList("size-large");
+                this.RemoveFromClassList("size-small");
+                this.AddToClassList("size-medium");
+            });
+            evt.menu.AppendAction("Small Text Size", action => {
+                this.RemoveFromClassList("size-large");
+                this.RemoveFromClassList("size-medium");
+                this.AddToClassList("size-small");
+            });
+            evt.menu.AppendSeparator();
         }
 
         private void OnTextChange(ChangeEvent<string> evt) {
@@ -92,7 +113,6 @@ namespace WorkBoard {
           double width = layout.width;
           layout = this.layout;
           double height = layout.height;
-          Debug.Log($"{left} {top}");
           return new Rect((float) left, (float) top, (float) width, (float) height);
         }
 

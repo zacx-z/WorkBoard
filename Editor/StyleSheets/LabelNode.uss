@@ -2,7 +2,6 @@
     border-radius: 8px;
     background-color: #3F3F3F;
     padding: 5px;
-    font-size: 16px;
 }
 
 :selected > #selection-border {
@@ -21,6 +20,26 @@
     margin: -1px -2px;
 }
 
-.label-node #unity-text-input {
-    font-size:16px;
+.label-node.size-small {
+    font-size: 12px;
+}
+
+.label-node.size-small #unity-text-input {
+    font-size: 12px;
+}
+
+.label-node.size-medium {
+    font-size: 18px;
+}
+
+.label-node.size-medium #unity-text-input {
+    font-size: 18px;
+}
+
+.label-node.size-large {
+    font-size: 32px;
+}
+
+.label-node.size-large #unity-text-input {
+    font-size: 32px;
 }
