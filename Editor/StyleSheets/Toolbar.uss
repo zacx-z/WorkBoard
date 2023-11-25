@@ -1,0 +1,13 @@
+.unity-toolbar-button {
+    flex-direction: row;
+}
+
+.unity-toolbar-button:focus {
+    border-color: rgb(0.769, 0.769, 0.769);
+}
+
+.unity-icon-arrow {
+    width: 16px;
+    height: 16px;
+    background-image: resource("StyleSheets/Northstar/Images/d_dropdown.png");
+}

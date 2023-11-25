@@ -114,7 +114,7 @@ namespace WorkBoard {
                     evt.menu.AppendAction("Expand Folder Content", ExpandFolderContent);
                 }
             } else {
-                evt.menu.AppendAction("Expand Children References", ExpandChildrenReferences);
+                evt.menu.AppendAction("Expand Child References", ExpandChildReferences);
             }
             evt.menu.AppendAction("Show Asset Preview", ShowPreview, (Data.showPreview ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
             evt.menu.AppendAction("Show Inspector", ShowInspector, (Data.showInspector ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
@@ -187,7 +187,7 @@ namespace WorkBoard {
             }
         }
 
-        private void ExpandChildrenReferences(DropdownMenuAction action) {
+        private void ExpandChildReferences(DropdownMenuAction action) {
             Vector2 pos = GetNewChildPosition();
             parentView.ClearSelection();
 

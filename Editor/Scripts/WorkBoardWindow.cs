@@ -1,3 +1,4 @@
+
 namespace WorkBoard {
     using System;
     using System.Collections.Generic;
@@ -7,6 +8,7 @@ namespace WorkBoard {
     using UnityEditor.Callbacks;
     using UnityEditor.Experimental.GraphView;
     using UnityEditor.UIElements;
+    using UnityEditor.Toolbars;
     using System.Linq;
     using NodeData = WorkBoardData.NodeData;
 
@@ -80,8 +82,9 @@ namespace WorkBoard {
                 style = { flexGrow = 1 }
             };
             var toolbar = new Toolbar();
+            toolbar.styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.nelasystem.workboard/Editor/StyleSheets/Toolbar.uss"));
             toolbar.Add(new ToolbarButton(OnOpenMenu) { text = "Open ..." });
-            toolbar.Add(new ToolbarButton(OpenCreateMenu) { text = "Create ▾" });
+            toolbar.Add(new EditorToolbarDropdown(OpenCreateMenu) { text = "Create" });
             toolbar.Add(new VisualElement() { style = { flexGrow = 1 }});
             _selectButton = new ToolbarButton(SelectBoardAsset) { text = "Select Board" };
             toolbar.Add(_selectButton);
