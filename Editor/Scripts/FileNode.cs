@@ -36,6 +36,18 @@ namespace WorkBoard {
                     maxWidth = 64
                 }
             });
+            this.titleContainer.Add(new LinkDragger(data)
+            {
+                style =
+                {
+                    width = 12,
+                    height = 12,
+                    marginTop = 8,
+                    marginBottom = 8,
+                    marginLeft = 8,
+                    marginRight = 8,
+                }
+            });
             this.expanded = false;
 
             RefreshInspectorElement();
