@@ -1,3 +1,4 @@
+#nullable disable
 
 namespace WorkBoard {
     using System;
@@ -73,6 +74,7 @@ namespace WorkBoard {
         private Dictionary<Group, GroupData> _groupMap;
         private WorkBoardView _graphView;
         private ToolbarButton _selectButton;
+        private ToolbarButton _saveButton;
 
         private void OnEnable() {
             titleContent = new GUIContent(target == null ? "New WorkBoard" : target.name);
@@ -88,7 +90,7 @@ namespace WorkBoard {
             toolbar.Add(new VisualElement() { style = { flexGrow = 1 }});
             _selectButton = new ToolbarButton(SelectBoardAsset) { text = "Select Board" };
             toolbar.Add(_selectButton);
-            toolbar.Add(new ToolbarButton(SaveChanges) { text = "Save" });
+            toolbar.Add(_saveButton = new ToolbarButton(SaveChanges) { text = "Save" });
             rootVisualElement.Add(toolbar);
             rootVisualElement.Add(_graphView);
 
@@ -131,6 +133,16 @@ namespace WorkBoard {
 
         private void SetTarget(WorkBoardData data) {
             if (data == target) return;
+
+            if (hasUnsavedChanges) {
+                var res = EditorUtility.DisplayDialogComplex("Unsaved Changes Detected", saveChangesMessage, "Save",
+                    "Cancel", "Discard");
+                if (res == 0)
+                    SaveChanges();
+                if (res == 1)
+                    return;
+            }
+
             target = data;
             _graphView.graphViewChanged -= OnGraphChanged;
             ClearGraph();
@@ -166,6 +178,8 @@ namespace WorkBoard {
         private void OnTargetChanged() {
             if (target != null) titleContent = new GUIContent(target.name);
             _selectButton.SetEnabled(target != null);
+            hasUnsavedChanges = false;
+            _saveButton.SetEnabled(false);
         }
 
         private void ClearGraph() {
@@ -222,7 +236,7 @@ namespace WorkBoard {
 
         private void OnNodeAdded(GraphElement elem, Rect pos) {
             Undo.RegisterCompleteObjectUndo(this, "WorkBoard Add Node");
-            hasUnsavedChanges = true;
+            MarkChanged();
 
             if (elem is IBoardElement node) {
                 nodeData ??= new List<NodeData>();
@@ -240,13 +254,13 @@ namespace WorkBoard {
         }
 
         private void OnNodeWillChange() {
-            hasUnsavedChanges = true;
+            MarkChanged();
             Undo.RegisterCompleteObjectUndo(this, "Work Board Change Node");
             EditorUtility.SetDirty(this);
         }
 
         private GraphViewChange OnGraphChanged(GraphViewChange change) {
-            hasUnsavedChanges = true;
+            MarkChanged();
             Undo.RegisterCompleteObjectUndo(this, "WorkBoard Change Graph");
             if (change.movedElements != null) {
                 foreach (var moved in change.movedElements) {
@@ -340,6 +354,11 @@ namespace WorkBoard {
             Selection.activeObject = target;
         }
 
+        private void MarkChanged() {
+            hasUnsavedChanges = true;
+            _saveButton.SetEnabled(true);
+        }
+
         public override void SaveChanges() {
             if (target == null || string.IsNullOrEmpty(AssetDatabase.GetAssetPath(target))) {
                 var path = EditorUtility.SaveFilePanelInProject("Save Work Board", "WorkBoard", "asset", "Save");
@@ -351,6 +370,7 @@ namespace WorkBoard {
                 SaveToTarget();
             }
             base.SaveChanges();
+            _saveButton.SetEnabled(false);
         }
 
         private void SaveToTarget() {
