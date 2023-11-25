@@ -9,6 +9,7 @@ namespace WorkBoard {
         public LinkDragger(FileData fileData) {
             _targetAsset = fileData.asset;
             this.image = AssetDatabase.LoadAssetAtPath<Texture>("Packages/com.nelasystem.workboard/Editor/Icons/LinkShare.png");
+            this.AddToClassList("link-dragger");
             this.RegisterCallback<MouseDownEvent>(OnMouseDown);
         }
 

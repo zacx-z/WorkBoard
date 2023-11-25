@@ -36,18 +36,7 @@ namespace WorkBoard {
                     maxWidth = 64
                 }
             });
-            this.titleContainer.Add(new LinkDragger(data)
-            {
-                style =
-                {
-                    width = 12,
-                    height = 12,
-                    marginTop = 8,
-                    marginBottom = 8,
-                    marginLeft = 8,
-                    marginRight = 8,
-                }
-            });
+            this.titleContainer.Add(new LinkDragger(data));
             this.expanded = false;
 
             RefreshInspectorElement();
@@ -93,6 +82,8 @@ namespace WorkBoard {
                 }
             }
 
+            this.styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.nelasystem.workboard/Editor/StyleSheets/FileNode.uss"));
+            this.AddToClassList("file-node");
             this.RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanelEvent);
             this.mainContainer.RegisterCallback<MouseDownEvent>(OnClick);
         }
