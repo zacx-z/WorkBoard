@@ -66,7 +66,7 @@ namespace WorkBoard {
             return previewsForType;
         }
 
-        public static ObjectPreview GetPreviewForTarget(UnityEngine.Object[] targets, Type previewType) {
+        public static ObjectPreview? GetPreviewForTarget(UnityEngine.Object[] targets, Type previewType) {
             if (typeof(ObjectPreview).IsAssignableFrom(previewType) &&
                 Activator.CreateInstance(previewType) is ObjectPreview instance) {
                 instance.Initialize(targets);

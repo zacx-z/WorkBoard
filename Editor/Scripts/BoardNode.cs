@@ -20,8 +20,8 @@ namespace WorkBoard {
     public class BoardNode : Node, IBoardNode
     {
         private readonly BoardNodeData _data;
-        private Port _childrenPort;
-        private Port _parentPort;
+        private Port? _childrenPort;
+        private Port? _parentPort;
 
         public BoardNodeData Data => _data;
         public Port ParentPort {

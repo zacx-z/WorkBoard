@@ -12,13 +12,13 @@ namespace WorkBoard {
     public class FileNode : BoardNode<FileData> {
         private Object asset => Data.asset;
         private bool isAssetMissing => asset == null;
-        private InspectorElement _inspectorElement;
-        private Image _iconPreviewElement;
+        private InspectorElement? _inspectorElement;
+        private Image? _iconPreviewElement;
         private Dictionary<Component, InspectorElement> componentInspectors;
-        private List<Type> _previewTypes;
-        private List<ObjectPreview> _previews;
-        private PreviewElement _previewElement;
-        private Editor _cachedEditor;
+        private List<Type>? _previewTypes;
+        private List<ObjectPreview>? _previews;
+        private PreviewElement? _previewElement;
+        private Editor? _cachedEditor;
 
         public FileNode(FileData data) : base (data){
             if (isAssetMissing) {
@@ -267,7 +267,7 @@ namespace WorkBoard {
             RefreshAssetPreviewElement();
         }
 
-        private void OpenPreview(Type previewType, IPreviewProvider preview) {
+        private void OpenPreview(Type previewType, IPreviewProvider? preview) {
             if (_previewElement != null && _previewElement.previewType == previewType) {
                 ClosePreview();
                 OnWillChange();

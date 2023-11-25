@@ -8,10 +8,10 @@ namespace WorkBoard {
     public class PreviewElement : VisualElement {
         private readonly Object _target;
         public readonly Type previewType;
-        private IPreviewProvider _preview;
+        private IPreviewProvider? _preview;
         private IMGUIContainer _previewElement;
 
-        public PreviewElement(Object target, Type previewType, IPreviewProvider preview = null) {
+        public PreviewElement(Object target, Type previewType, IPreviewProvider? preview = null) {
             _target = target;
             this.previewType = previewType;
             this._preview = preview;
@@ -28,10 +28,10 @@ namespace WorkBoard {
             _preview ??= new ObjectPreviewProvider(InspectorUtils.GetPreviewForTarget(new[] { _target }, previewType));
 
             var thatControlsPreview = _preview;
-            bool flag = thatControlsPreview != null && thatControlsPreview.HasPreviewGUI();
+            bool flag = thatControlsPreview.HasPreviewGUI();
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar, GUILayout.Height(21f));
             string text = string.Empty;
-            if (thatControlsPreview != null) text = thatControlsPreview.GetPreviewTitle().text;
+            text = thatControlsPreview.GetPreviewTitle().text;
             GUILayout.Label(text, NodeStyles.preToolbarLabel);
             GUILayout.FlexibleSpace();
             if (flag) thatControlsPreview.OnPreviewSettings();
@@ -39,12 +39,13 @@ namespace WorkBoard {
 
             var previewArea = GUILayoutUtility.GetRect(0.0f, 320f, 64f, 320f);
             if (Event.current.type == EventType.Repaint) NodeStyles.preBackground.Draw(previewArea, false, false, false, false);
-            if (thatControlsPreview == null || !thatControlsPreview.HasPreviewGUI()) return;
+            if (!thatControlsPreview.HasPreviewGUI()) return;
             thatControlsPreview.DrawPreview(previewArea);
         }
 
         private void OnDetachFromPanel(DetachFromPanelEvent evt) {
-            if (_preview != null) {
+            // also called when the node is collapsed
+            if (_preview != null && _preview is ObjectPreviewProvider) {
                 _preview.Cleanup();
                 _preview = null;
             }
