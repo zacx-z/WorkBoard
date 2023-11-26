@@ -1,3 +1,5 @@
+[![Unity 2021.3](https://github.com/zacx-z/WorkBoard/actions/workflows/main.yml/badge.svg)](https://github.com/zacx-z/WorkBoard/actions/workflows/main.yml)
+[![Unity 2020.3](https://github.com/zacx-z/WorkBoard/actions/workflows/test-building-2020.3.yml/badge.svg)](https://github.com/zacx-z/WorkBoard/actions/workflows/test-building-2020.3.yml)
 # WorkBoard
 A workflow tool to freely organize assets on a board in order to track them better.
 
