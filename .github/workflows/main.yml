@@ -10,8 +10,9 @@ jobs:
     - name: Checkout blank project
       uses: actions/checkout@v4
       with:
-        repository: areyoutoo/Unity3D-EmptyProject
-        path: .
+        repository: game-ci/unity-builder
+        sparse-checkout: dist/BlankProject
+    - run: mv dist/BlankProject/* ./
     - uses: actions/checkout@v4
       with:
         path: Packages/WorkBoard
