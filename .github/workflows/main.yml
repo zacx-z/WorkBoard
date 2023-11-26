@@ -23,3 +23,4 @@ jobs:
       with:
         targetPlatform: StandaloneLinux64
         unityVersion: 2021.3.31f1
+        allowDirtyBuild: true
