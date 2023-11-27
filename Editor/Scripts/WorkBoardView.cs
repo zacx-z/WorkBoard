@@ -56,12 +56,32 @@ namespace WorkBoard {
                     }
                 });
             }
-            evt.menu.AppendAction("Select Assets", SelectAssets);
-            evt.menu.AppendAction("Create Group", CreateGroup);
+
+            if (selection.Count > 0) {
+                evt.menu.AppendAction("Select Assets", SelectAssets);
+                evt.menu.AppendAction("Create Group", CreateGroup);
+                evt.menu.AppendAction("Align/Align Left", _ => AlignHorizontalPositions(node => node.GetPosition().xMin));
+                evt.menu.AppendAction("Align/Align Right", _ => AlignHorizontalPositions(node => node.GetPosition().xMax));
+            }
+
             evt.menu.AppendSeparator();
             base.BuildContextualMenu(evt);
             evt.menu.AppendAction("Create Note", CreateNoteNode);
             evt.menu.AppendAction("Create Label", CreateLabelNode);
+        }
+
+        private void AlignHorizontalPositions(Func<GraphElement, float> positionGetter) {
+            var selectedElements = selection.OfType<GraphElement>().ToArray();
+            if (selectedElements.Length == 0) return;
+            var first = selectedElements[0];
+            var alignTarget = positionGetter(first);
+            for (var i = 1; i < selectedElements.Length; i++) {
+                var pivot = positionGetter(selectedElements[i]);
+                var diff = alignTarget - pivot;
+                var pos = selectedElements[i].GetPosition();
+                pos.x += diff;
+                selectedElements[i].SetPosition(pos);
+            }
         }
 
         private void SelectAssets(DropdownMenuAction action) {
