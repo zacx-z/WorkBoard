@@ -90,7 +90,9 @@ namespace WorkBoard {
 
         private void OnDetachFromPanelEvent(DetachFromPanelEvent evt) {
             if (_previews != null) {
-                _previews.ForEach(p => p.Cleanup());
+                _previews.ForEach(p => {
+                    p.Cleanup();
+                });
                 _previews.Clear();
             }
 
@@ -166,7 +168,14 @@ namespace WorkBoard {
                             : DropdownMenuAction.Status.None) | DropdownMenuAction.Status.Normal);
             }
             evt.menu.AppendSeparator();
-            evt.menu.AppendAction("Open Inspector Window", action => EditorUtility.OpenPropertyEditor(asset));
+            evt.menu.AppendAction("Open Inspector Window", action => {
+#if UNITY_2021_1_OR_NEWER
+                EditorUtility.OpenPropertyEditor(asset);
+#else
+                typeof(EditorUtility).Assembly.GetType("UnityEditor.PropertyEditor").GetMethod("OpenPropertyEditor", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)
+                    .Invoke(null, new object[] { asset, true });
+#endif
+            });
             base.BuildContextualMenu(evt);
         }
 
@@ -361,5 +370,13 @@ namespace WorkBoard {
             var pos = GetPosition();
             return pos.position + (pos.width + 50) * Vector2.right;
         }
+    }
+
+    internal static class ObjectPreviewExtensions {
+#if !UNITY_2021_3_OR_NEWER
+        public static void Cleanup(this ObjectPreview preview) {
+            GC.SuppressFinalize(preview);
+        }
+#endif
     }
 }

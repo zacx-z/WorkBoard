@@ -87,8 +87,10 @@ namespace WorkBoard
             GUI.enabled = true;
             GUI.changed = false;
             EditorGUI.indentLevel = 0;
+#if UNITY_2021_3_OR_NEWER
             _currentViewWidthProperty ??= typeof(EditorGUIUtility).GetProperty("currentViewWidth", BindingFlags.Public | BindingFlags.Static);
             _currentViewWidthProperty.SetValue(null, 320);
+#endif
             EditorGUIUtility.fieldWidth = 150.0f;
             EditorGUIUtility.labelWidth = 240.0f;
             EditorGUIUtility.hierarchyMode = false;

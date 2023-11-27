@@ -9,7 +9,6 @@ namespace WorkBoard {
     using UnityEditor.Callbacks;
     using UnityEditor.Experimental.GraphView;
     using UnityEditor.UIElements;
-    using UnityEditor.Toolbars;
     using System.Linq;
     using NodeData = WorkBoardData.NodeData;
 
@@ -86,7 +85,11 @@ namespace WorkBoard {
             var toolbar = new Toolbar();
             toolbar.styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.nelasystem.workboard/Editor/StyleSheets/Toolbar.uss"));
             toolbar.Add(new ToolbarButton(OnOpenMenu) { text = "Open ..." });
-            toolbar.Add(new EditorToolbarDropdown(OpenCreateMenu) { text = "Create" });
+#if UNITY_2021_2_OR_NEWER
+            toolbar.Add(new UnityEditor.Toolbars.EditorToolbarDropdown(OpenCreateMenu) { text = "Create" });
+#else
+            toolbar.Add(new ToolbarButton(OpenCreateMenu) { text = "Create ▾" });
+#endif
             toolbar.Add(new VisualElement() { style = { flexGrow = 1 }});
             _selectButton = new ToolbarButton(SelectBoardAsset) { text = "Select Board" };
             toolbar.Add(_selectButton);
@@ -183,7 +186,11 @@ namespace WorkBoard {
         }
 
         private void ClearGraph() {
+#if UNITY_2021_3_OR_NEWER
             _graphView.DeleteElements(_graphView.graphElements);
+#else
+            _graphView.DeleteElements(_graphView.graphElements.ToList());
+#endif
             _dataMap.Clear();
         }
 
